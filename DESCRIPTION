@@ -1,0 +1,22 @@
+Package: origami
+Type: Package
+Title: A Self-Describing Dataset Format and Interface
+Version: 0.1
+Date: 2017-02-18
+Author: Tim Bergsma
+Maintainer: Tim Bergsma <bergsmat@gmail.com>
+Description: Defines a compact data format that includes metadata. 
+ The function fold() creates implements the format by converting 
+ from data.frame, and unfold() converts back. The predictability
+ of the folded format supports reusability of data processing tools.
+License: GPL-3
+LazyData: TRUE
+Imports: 
+ tidyr,
+ dplyr,
+ magrittr,
+ encode,
+ csv
+Suggests:
+ wrangle
+RoxygenNote: 6.0.1
