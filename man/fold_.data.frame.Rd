@@ -4,11 +4,13 @@
 \alias{fold_.data.frame}
 \title{Fold a Data.frame, Standard Evaluation}
 \usage{
-\method{fold_}{data.frame}(x, args, group_by = groups(x),
+\method{fold_}{data.frame}(x, ..., args, group_by = groups(x),
   meta = obj_attr(x), simplify = TRUE, sort = TRUE)
 }
 \arguments{
 \item{x}{data.frame}
+
+\item{...}{ignored arguments}
 
 \item{args}{list of formulas representing grouping columns}
 

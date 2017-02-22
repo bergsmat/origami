@@ -4,10 +4,12 @@
 \alias{unfold_.folded}
 \title{Unfold a Folded Data.frame, Standard Evaluation}
 \usage{
-\method{unfold_}{folded}(x, var)
+\method{unfold_}{folded}(x, ..., var)
 }
 \arguments{
 \item{x}{folded data.frame}
+
+\item{...}{ignored arguments}
 
 \item{var}{variables to unfold, given as unquoted names}
 }

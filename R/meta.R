@@ -62,7 +62,7 @@ as.folded.folded <- function(x,...)x
 #' 
 #' Coerces to folded from data.frame.
 #' 
-#' Expects columns VARIABLE, META, and VALUE. Remaining columns are for classification and may be NA. Coerces VALUE to character. Removes duplicate records with warning. Sorts on non-value columns by default.
+#' Expects columns VARIABLE, META, and VALUE. Remaining columns are for classification and may be NA. Coerces VALUE to character. Removes duplicate records with warning. Sorts on non-value columns by default. Groups by columns other than VALUE.
 #' 
 #' @inheritParams as.folded
 #' @param sort Should the result be sorted?
@@ -81,8 +81,8 @@ as.folded.data.frame <- function(x, sort = TRUE, ...){
     warning('removing duplicates')
     x <- unique(x)
   }
+  x <- group_by_(x, .dots = setdiff(names(x),'VALUE'))
   if(sort) x <-  dplyr::arrange_(x,.dots=setdiff(names(x),'VALUE'))
-  VALUE <- NULL # squelch R CMD CHECK NOTE
   d <- dplyr::select(x,-VALUE)
   d <- d[duplicated(d),,drop=FALSE]
   if(nrow(d)){
@@ -214,6 +214,7 @@ unfold_ <- function(x,...)UseMethod('unfold_')
 #' @param ... variables to unfold, given as unquoted names
 #' @seealso fold_.data.frame
 #' @return data.frame
+#' @importFrom lazyeval dots_capture
 #' @export
 unfold.folded <- function(  
   x,
@@ -227,13 +228,16 @@ unfold.folded <- function(
 #' By default, the entire data.frame is unfolded, possibly giving back something originally passed to fold().  If \code{var} is specified, only selected items are unfolded.  Values stored as encodings are converted to factor.
 #' 
 #' @param x folded data.frame
+#' @param ... ignored arguments
 #' @param var variables to unfold, given as unquoted names
 #' @return data.frame
 #' @keywords internal
 #' @seealso fold.data.frame
 #' @export
+#' @importFrom utils read.table 
 unfold_.folded <- function(  
   x,
+  ... ,
   var
 ){
   if(length(var) == 0) var = unique(x$VARIABLE[is.na(x$META)])
@@ -407,7 +411,7 @@ fold.data.frame <- function(
 ){
   fold_.data.frame(
     x,
-    args = dots.capture(...),
+    args = dots_capture(...),
     group_by = group_by,
     meta = meta,
     simplify = simplify,
@@ -428,6 +432,7 @@ fold_ <- function(x, ... )UseMethod('fold_')
 #' 
 #' Folds a data.frame using standard evaluation. See also \code{\link{fold.data.frame}}.
 #' @param x data.frame
+#' @param ... ignored arguments
 #' @param args list of formulas representing grouping columns
 #' @param group_by a vector of column names serving as key: included in result but not stacked
 #' @param meta a list of formulas in the form object ~ attribute. Pass something with length 0 to suppress guessing.
@@ -445,13 +450,14 @@ fold_ <- function(x, ... )UseMethod('fold_')
 
 fold_.data.frame <- function(
   x,
+  ...,
   args,
   group_by = groups(x),
   meta = obj_attr(x),
   simplify = TRUE,
   sort = TRUE
 ){
-  if(length(group_by)) x <- group_by_(x, group_by)
+  if(length(group_by)) x <- group_by_(x, .dots = group_by)
   if(length(args))args <- args[is.na(names(args))]
   if(length(args))x <- group_by(x, args)
   if(length(groups(x)) == 0)warning('Nothing to group by.  Do you need to supply groups?')
@@ -462,7 +468,7 @@ fold_.data.frame <- function(
   table <- cbind(VARIABLE,META,COL) %>% data.frame(stringsAsFactors = FALSE)
   # data
   d <- x[,setdiff(names(x),COL),drop=F]
-  d <- tidyr::gather_(d,'VARIABLE','VALUE',setdiff(names(d),group_by))
+  d <- tidyr::gather_(d,'VARIABLE','VALUE',setdiff(names(d),groups(x)))
   d <- mutate(d,META=NA_character_)
   d <- mutate(d,VALUE = VALUE %>% as.character)
   d <- as.folded(d)
@@ -473,11 +479,11 @@ fold_.data.frame <- function(
     # prevent tidyr warning about differing attributes.  
     # Factor levels to be recovered later from x.
     m %<>% 
-      dplyr::select_(.dots=c(group_by,COL)) %>% 
+      dplyr::select_(.dots=c(groups(x),COL)) %>% 
       tidyr::gather_('COL','VALUE',COL) %>%
       unique
     m <- left_join(m,table,by='COL') %>% dplyr::select(-COL)
-    m <- dplyr::select_(m,.dots=c('VARIABLE','META','VALUE',group_by))
+    m <- dplyr::select_(m,.dots=c('VARIABLE','META','VALUE',groups(x)))
     m <- as.folded(m)
     for(i in 1:nrow(table)){
       var <- table[i,'VARIABLE']
@@ -491,7 +497,7 @@ fold_.data.frame <- function(
       }
     }
     if(simplify) m <- unique(reduce(m))
-    m <- dplyr::select_(m,.dots=c('VARIABLE','META','VALUE',group_by))
+    m <- dplyr::select_(m,.dots=c('VARIABLE','META','VALUE',groups(x)))
     d <- bind_rows(m,d)
   }
   d <- as.folded(d, sort = sort, ...)
@@ -517,6 +523,7 @@ obj_attr <- function(x,...)UseMethod('obj_attr')
 #' @return a named list of formulas in the form object ~ attribute
 #' @export
 #' @keywords internal
+#' @importFrom stats as.formula
 obj_attr.character <- function(x,...){
   x <- x[grepl( '_.',x)]
   y <- strsplit(x,'_') # all these should have two elements
@@ -557,6 +564,7 @@ short <- function(x){
   nchar <- nchar(x)
   y <- paste0(y,ifelse(nchar>8,'...',''))
   y <- as.character(y)
+  y[is.na(x)] <- NA_character_
   y
 }
 
@@ -693,3 +701,4 @@ metaMerge.NULL <- function(x,y,all=TRUE,...){
   warning('merging NULL object')
   merge(x,y,all=all,...)
 }
+

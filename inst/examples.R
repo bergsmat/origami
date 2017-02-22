@@ -1,5 +1,6 @@
 library(tidyr)
 library(dplyr)
+library(lazyeval)
 library(magrittr)
 library(encode)
 library(csv)
@@ -9,7 +10,7 @@ x <- 'inst/data.csv' %>% as.csv
 x
 
 #' Step 0.  Rename columns to remove semantic (non-syntactic) underscores.
-#' Step 1.  De-interlace the data, 
+#' Step 1.  De-interlace the data. 
 x %<>% filter(CMT == 2) %>% select(-EVID,-CMT,-AMT)
 
 
@@ -32,16 +33,11 @@ x %<>% mutate(
          WT_LABEL = 'weight',
        PRED_LABEL = 'population prediction'
 )
-x %>% mutate(
+x %<>% mutate(
          C_GUIDE = factor(
         C,levels = c(NA,'C'),
-          labels = c('not commented','commented'))
-)
-        
-        
-       ### need bug fix ###
-        
-        ,
+          labels = c('not commented','commented'),
+        exclude = NULL),
       TIME_GUIDE = 'h',
         DV_GUIDE = 'ng/mL',
        BLQ_GUIDE = factor(
@@ -58,7 +54,14 @@ x %>% mutate(
 
 head(x)
 x %>% fold %>% data.frame
-
-
-
-
+x %>% fold %>% groups
+x %>% fold %>% unfold
+identical(x, unfold(fold(x)))
+identical(names(x),names(unfold(fold(x))))
+setequal(names(x),names(unfold(fold(x))))
+names(x)
+names(unfold(fold(x)))
+setdiff(names(x),names(unfold(fold(x))))
+setdiff(names(unfold(fold(x))),names(x))
+head(x)
+x %>% fold %>% unfold %>% data.frame %>% head
