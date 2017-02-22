@@ -20,3 +20,4 @@ Infers object ~ attribute relationships from character.
 \details{
 Character is, for example, the names of a data.frame.  Processes the names, splitting on underscore and converting to formulas, with names same as the values in x that contained any underscores.
 }
+\keyword{internal}

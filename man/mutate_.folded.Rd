@@ -7,13 +7,11 @@
 \method{mutate_}{folded}(.data, ..., .dots)
 }
 \arguments{
-\item{.data}{A tbl. All main verbs are S3 generics and provide methods
-for \code{\link{tbl_df}}, \code{\link[dtplyr]{tbl_dt}} and \code{\link{tbl_sql}}.}
+\item{.data}{passed to next method}
 
-\item{...}{Logical predicates. Multiple conditions are combined with \code{&}.}
+\item{...}{passed to next method}
 
-\item{.dots}{Used to work around non-standard evaluation. See
-\code{vignette("nse")} for details.}
+\item{.dots}{passed to next method}
 }
 \value{
 folded
@@ -21,3 +19,4 @@ folded
 \description{
 Mutates folded.
 }
+\keyword{internal}

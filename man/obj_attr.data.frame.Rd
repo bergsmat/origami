@@ -17,3 +17,7 @@ a list of formulas in the form object ~ attribute
 \description{
 Infers object ~ attribute relationships from data.frame.  Processes the names of a data.frame.
 }
+\seealso{
+\code{\link{obj_attr.character}}
+}
+\keyword{internal}

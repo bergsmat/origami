@@ -6,9 +6,11 @@ Date: 2017-02-18
 Author: Tim Bergsma
 Maintainer: Tim Bergsma <bergsmat@gmail.com>
 Description: Defines a compact data format that includes metadata. 
- The function fold() creates implements the format by converting 
+ The function fold() creates the format by converting 
  from data.frame, and unfold() converts back. The predictability
- of the folded format supports reusability of data processing tools.
+ of the folded format supports reusability of data processing tools,
+ while the presence of embedded metadata improves portability, 
+ interpretability, and efficiency.
 License: GPL-3
 LazyData: TRUE
 Imports: 

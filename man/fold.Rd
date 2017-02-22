@@ -14,3 +14,4 @@ fold(x, ...)
 \description{
 Folds an object.
 }
+\keyword{internal}

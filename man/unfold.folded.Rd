@@ -2,17 +2,24 @@
 % Please edit documentation in R/meta.R
 \name{unfold.folded}
 \alias{unfold.folded}
-\title{Unfold a Folded Format Object}
+\title{Unfold a Folded Data.frame}
 \usage{
-\method{unfold}{folded}(x, var = unique(x$VARIABLE[is.na(x$META)]), ...)
+\method{unfold}{folded}(x, ...)
 }
 \arguments{
-\item{x}{object}
+\item{x}{folded data.frame}
 
-\item{var}{variables to unfold, given as character vector}
-
-\item{...}{passed arguments}
+\item{...}{variables to unfold, given as unquoted names}
+}
+\value{
+data.frame
 }
 \description{
-Unfolds a folded data.frame.  Ideally it should be losslessly reversible.
+Unfolds a folded data.frame, or part thereof.
+}
+\details{
+By default, the entire data.frame is unfolded, possibly giving back something originally passed to fold().  If \dots is specified, only selected items are unfolded.  Values stored as encodings are converted to factor.
+}
+\seealso{
+fold_.data.frame
 }

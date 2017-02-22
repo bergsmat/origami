@@ -2,7 +2,7 @@
 % Please edit documentation in R/meta.R
 \name{as.folded.character}
 \alias{as.folded.character}
-\title{Coerce to Folded Format from Character}
+\title{Coerce to Folded Format from Filepath}
 \usage{
 \method{as.folded}{character}(x, ...)
 }
@@ -15,5 +15,5 @@
 folded
 }
 \description{
-Coerces to folded format from character: assumes x is a filename.
+Coerces to folded format from character, treating \code{x} as a filepath.
 }

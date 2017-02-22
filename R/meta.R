@@ -29,11 +29,12 @@ as.csv.folded <- function(x,...){
 #' @param x object
 #' @param ... passed arguments
 #' @export
+#' @keywords internal
 as.folded <- function(x,...)UseMethod('as.folded')
 
-#' Coerce to Folded Format from Character
+#' Coerce to Folded Format from Filepath
 #' 
-#' Coerces to folded format from character: assumes x is a filename.
+#' Coerces to folded format from character, treating \code{x} as a filepath.
 #' 
 #' @param x length-one character
 #' @param ... passed arguments
@@ -53,6 +54,7 @@ as.folded.character <- function(x,...){
 #' @inheritParams as.folded
 #' @return folded
 #' @export
+#' @keywords internal
 as.folded.folded <- function(x,...)x
 
 
@@ -67,7 +69,7 @@ as.folded.folded <- function(x,...)x
 #' @return folded
 #' @import dplyr
 #' @export
-as.folded.data.frame <- function(x,sort=TRUE,...){
+as.folded.data.frame <- function(x, sort = TRUE, ...){
   constitutive <- c('VARIABLE','META','VALUE')
   extras <- setdiff(names(x),constitutive)
   last <- if(length(extras)) rev(extras)[[1]] else character(0)
@@ -87,7 +89,7 @@ as.folded.data.frame <- function(x,sort=TRUE,...){
     eg <- d[1,,drop=FALSE]
     nms <- paste(names(eg),collapse=', ')
     eg <- do.call(paste,c(as.list(eg),list(collapse=', ')))
-    warning('found duplicates of ',nms,' e.g. ',eg)
+    warning('removing duplicates of ',nms,' e.g. ',eg)
   }
   d <- dplyr::select(x,-VALUE)
   if(ncol(d) > 2) d <- d[,1:(ncol(d) - 1),drop=FALSE] # select all but last
@@ -184,25 +186,57 @@ distill.data.frame <- function(
 
 #' Unfold an Object
 #' 
-#' Unfolds an object
+#' Unfolds an object.
 #' 
 #' @param x object
 #' @param ... passed arguments
 #' @export
+#' @keywords internal
 unfold <- function(x,...)UseMethod('unfold')
 
-#' Unfold a Folded Format Object
+#' Unfold an Object, Standard Evaluation
 #' 
-#' Unfolds a folded data.frame.  Ideally it should be losslessly reversible.
+#' Unfolds an object, standard evaluation.
 #' 
-#' @inheritParams unfold
-#' @param var variables to unfold, given as character vector
+#' @param x object
+#' @param ... passed arguments
+#' @export
+#' @keywords internal
+unfold_ <- function(x,...)UseMethod('unfold_')
+
+#' Unfold a Folded Data.frame
+#' 
+#' Unfolds a folded data.frame, or part thereof.
+#' 
+#' By default, the entire data.frame is unfolded, possibly giving back something originally passed to fold().  If \dots is specified, only selected items are unfolded.  Values stored as encodings are converted to factor.
+#' 
+#' @param x folded data.frame
+#' @param ... variables to unfold, given as unquoted names
+#' @seealso fold_.data.frame
+#' @return data.frame
 #' @export
 unfold.folded <- function(  
   x,
-  var = unique(x$VARIABLE[is.na(x$META)]),
   ...
+)unfold_(x, var = dots_capture(...))
+  
+#' Unfold a Folded Data.frame, Standard Evaluation
+#' 
+#' Unfolds a folded data.frame, or part thereof, using standard evaluation.
+#' 
+#' By default, the entire data.frame is unfolded, possibly giving back something originally passed to fold().  If \code{var} is specified, only selected items are unfolded.  Values stored as encodings are converted to factor.
+#' 
+#' @param x folded data.frame
+#' @param var variables to unfold, given as unquoted names
+#' @return data.frame
+#' @keywords internal
+#' @seealso fold.data.frame
+#' @export
+unfold_.folded <- function(  
+  x,
+  var
 ){
+  if(length(var) == 0) var = unique(x$VARIABLE[is.na(x$META)])
   groups <- setdiff(names(x),c('VARIABLE','META','VALUE'))
   y <- lapply(var,function(v)distill(x,mission=v,...))
   z <- metaMerge(y)
@@ -214,10 +248,14 @@ unfold.folded <- function(
 #' Filter Folded
 #' 
 #' Filters folded.
-#' @inheritParams dplyr::filter_
+#' @param .data passed to next method
+#' @param ... passed to next method
+#' @param .dots passed to next method
 #' @return folded
-#' @export                        
-filter_.folded <- function(.data,...,.dots){
+#' @keywords internal                       
+#' @export      
+                  
+filter_.folded <- function(.data, ..., .dots){
   x <- NextMethod()
   class(x) <- union('folded',class(x))
   x
@@ -225,10 +263,13 @@ filter_.folded <- function(.data,...,.dots){
 #' Group Folded
 #' 
 #' Groups folded.
-#' @inheritParams dplyr::filter_
+#' @param .data passed to next method
+#' @param ... passed to next method
+#' @param .dots passed to next method
 #' @return folded
-#' @export                        
-group_by_.folded <- function(.data,...,.dots){
+#' @export 
+#' @keywords internal                       
+group_by_.folded <- function(.data, ..., .dots){
   x <- NextMethod()
   class(x) <- union('folded',class(x))
   x
@@ -236,10 +277,13 @@ group_by_.folded <- function(.data,...,.dots){
 #' Anti-join Folded
 #' 
 #' Anti-joins folded.
-#' @inheritParams dplyr::filter_
+#' @param .data passed to next method
+#' @param ... passed to next method
+#' @param .dots passed to next method
 #' @return folded
-#' @export                        
-anti_join.folded <- function(.data,...,.dots){
+#' @export 
+#' @keywords internal                       
+anti_join.folded <- function(.data, ..., .dots){
   x <- NextMethod()
   class(x) <- union('folded',class(x))
   x
@@ -247,10 +291,13 @@ anti_join.folded <- function(.data,...,.dots){
 #' Ungroup Folded
 #' 
 #' Ungroups folded.
-#' @inheritParams dplyr::filter_
+#' @param .data passed to next method
+#' @param ... passed to next method
+#' @param .dots passed to next method
 #' @return folded
 #' @export                        
-ungroup.folded <- function(.data,...,.dots){
+#' @keywords internal                       
+ungroup.folded <- function(.data, ..., .dots){
   x <- NextMethod()
   class(x) <- union('folded',class(x))
   x
@@ -258,10 +305,13 @@ ungroup.folded <- function(.data,...,.dots){
 #' Mutate Folded
 #' 
 #' Mutates folded.
-#' @inheritParams dplyr::filter_
+#' @param .data passed to next method
+#' @param ... passed to next method
+#' @param .dots passed to next method
 #' @return folded
 #' @export                        
-mutate_.folded <- function(.data,...,.dots){
+#' @keywords internal                       
+mutate_.folded <- function(.data, ..., .dots){
   x <- NextMethod()
   class(x) <- union('folded',class(x))
   x
@@ -269,10 +319,13 @@ mutate_.folded <- function(.data,...,.dots){
 #' Left-join Folded
 #' 
 #' Left-joins folded.
-#' @inheritParams dplyr::filter_
+#' @param .data passed to next method
+#' @param ... passed to next method
+#' @param .dots passed to next method
 #' @return folded
 #' @export                        
-left_join.folded <- function(.data,...,.dots){
+#' @keywords internal                       
+left_join.folded <- function(.data, ..., .dots){
   x <- NextMethod()
   class(x) <- union('folded',class(x))
   x
@@ -280,11 +333,14 @@ left_join.folded <- function(.data,...,.dots){
 #' Select Folded
 #' 
 #' Selects folded.
-#' @inheritParams dplyr::filter_
+#' @param .data passed to next method
+#' @param ... passed to next method
+#' @param .dots passed to next method
 #' @return folded
 #' @import dplyr
 #' @export                        
-select_.folded <- function(.data,...,.dots){
+#' @keywords internal                       
+select_.folded <- function(.data, ..., .dots){
   x <- NextMethod()
   class(x) <- union('folded',class(x))
   x
@@ -292,15 +348,17 @@ select_.folded <- function(.data,...,.dots){
 #' Arrange Folded
 #' 
 #' Arranges folded.
-#' @inheritParams dplyr::filter_
+#' @param .data passed to next method
+#' @param ... passed to next method
+#' @param .dots passed to next method
 #' @return folded
-#' @export                        
-arrange_.folded <- function(.data,...,.dots){
+#' @export
+#' @keywords internal                    
+arrange_.folded <- function(.data, ..., .dots){
   x <- NextMethod()
   class(x) <- union('folded',class(x))
   x
 }
-
 
 #' Fold an Object
 #' 
@@ -309,31 +367,94 @@ arrange_.folded <- function(.data,...,.dots){
 #' @param x object
 #' @param ... passed arguments
 #' @export
-fold <- function(x,...)UseMethod('fold')
+#' @keywords internal
+fold <- function(x, ... )UseMethod('fold')
 
 #' Fold a Data Frame
 #' 
-#' Folds a data.frame.  Converts from 'wide' format to 'tall' format. An attempt will be made to harvest metadata using the header convention object_attribute.
+#' Folds a data.frame.  Stacks columns, while isolating metadata and capturing keys.
+#' 
+#' A Folded data.frame is formalized re-presentation of a conventional data.frame.  Items in the conventional form are of three conceptual types: data, metadata, and keys.  Data items contain the primary values, to be described.  Metadata gives additional details about the data items or values. Keys are grouping items; combinations of grouping values should uniquely identify each conventional record.
+#' 
+#' In the result, names of data items appear in VARIABLE, while values of data items are stacked in VALUE. Data items are all columns from the input not otherwise identified as metadata or keys.
+#' 
+#' Likewise, names of metatdata items appear in META, while the name of the described data item appears in VARIABLE.  Values of metadata items appear in VALUE.  If the item is a factor, the metadata VALUE will be an encoding (see package: encode). Metadata items are identified explicitly using a list of formulas, or implicitly by means of column naming conventions.
+#' 
+#' Grouping items in the input persist in the result and serve as keys.  Both data and metadata values may have keys, but neither require them.  Keys are identified explicitly by supplying a group_by argument (or unnamed, unquoted arguments for non-standard evaluation), or implicitly when \code{x} is a grouped data.frame (\code{grouped_df}).   By default, superflous keys (those that do not help distinguish data items) are removed on a per-data-item basis.
+#'
+#' Note that metadata items may describe other metadata items, recursively.  In practice, however, such complexity could be problematic and is best avoided if possible.
+#' 
+#' There are cases where a real grouping item may appear superfluous, e.g. for a one-record dataset.  Enforce the groups by setting \code{simplify} to FALSE. 
+#' 
+#' The folded format supports mixed object types, as inferred from differences in relevant grouping items on a per record basis.  Mixed typing works best when object types form a nested hierarchy, i.e. all keys are left-subsets of the full key. Thus the order of grouping values is considered informative, e.g. for sorting.
 
-#' @inheritParams fold
+#' @param x data.frame
+#' @param ... unquoted names of grouping columns; overrides \code{group_by}
 #' @param group_by a vector of column names serving as key: included in result but not stacked
 #' @param meta a list of formulas in the form object ~ attribute. Pass something with length 0 to suppress guessing.
 #' @param simplify set to NA any group_by values that do not help distinguish values, and remove resulting duplicate records
-#' @return folded data.frame
+#' @param sort whether to sort the result
+#' @return folded data.frame with columns VARIABLE, META, VALUE and any supplied grouping items.
+#' @seealso \code{\link{obj_attr.data.frame}} \code{\link{fold_.data.frame}}
+#' @export
+fold.data.frame <- function(
+  x,
+  ... ,
+  group_by = groups(x),
+  meta = obj_attr(x),
+  simplify = TRUE,
+  sort = TRUE
+){
+  fold_.data.frame(
+    x,
+    args = dots.capture(...),
+    group_by = group_by,
+    meta = meta,
+    simplify = simplify,
+    sort = sort
+  )
+}
+#' Fold an Object, Standard Evaluation
+#' 
+#' Folds an object using standard evaluation.
+#' 
+#' @param x object
+#' @param ... passed arguments
+#' @export
+#' @keywords internal
+fold_ <- function(x, ... )UseMethod('fold_')
+
+#' Fold a Data.frame, Standard Evaluation
+#' 
+#' Folds a data.frame using standard evaluation. See also \code{\link{fold.data.frame}}.
+#' @param x data.frame
+#' @param args list of formulas representing grouping columns
+#' @param group_by a vector of column names serving as key: included in result but not stacked
+#' @param meta a list of formulas in the form object ~ attribute. Pass something with length 0 to suppress guessing.
+#' @param simplify set to NA any group_by values that do not help distinguish values, and remove resulting duplicate records
+#' @param sort whether to sort the result
+#' @return folded data.frame with columns VARIABLE, META, VALUE and any supplied grouping items.
 #' @import magrittr dplyr
 #' @importFrom tidyr spread
 #' @importFrom tidyr spread_
 #' @importFrom tidyr gather
 #' @importFrom tidyr gather_
+#' @seealso \code{\link{obj_attr.data.frame}} \code{\link{fold.data.frame}}
+#' @keywords internal
 #' @export
-fold.data.frame <- function(
-  x, 
+
+fold_.data.frame <- function(
+  x,
+  args,
   group_by = groups(x),
   meta = obj_attr(x),
   simplify = TRUE,
-  ...
+  sort = TRUE
 ){
-  if(is.null(group_by))warning('Nothing to group by.  Do you need to supply groups?')
+  if(length(group_by)) x <- group_by_(x, group_by)
+  if(length(args))args <- args[is.na(names(args))]
+  if(length(args))x <- group_by(x, args)
+  if(length(groups(x)) == 0)warning('Nothing to group by.  Do you need to supply groups?')
   # meta
   VARIABLE <- sapply(meta,function(f)f %>% as.list %>% `[[`(2) %>% as.character)
   META     <- sapply(meta,function(f)f %>% as.list %>% `[[`(3) %>% as.character)
@@ -373,7 +494,7 @@ fold.data.frame <- function(
     m <- dplyr::select_(m,.dots=c('VARIABLE','META','VALUE',group_by))
     d <- bind_rows(m,d)
   }
-  d <- as.folded(d) # sorts by default. ?
+  d <- as.folded(d, sort = sort, ...)
   d
 }
   
@@ -383,6 +504,8 @@ fold.data.frame <- function(
 #' Infers object-attribute relationships.
 #' @param x character
 #' @param ... passed arguments
+#' @export
+#' @keywords internal
 obj_attr <- function(x,...)UseMethod('obj_attr')
 
 #' Infer Object Attribute Relationships from Character
@@ -393,6 +516,7 @@ obj_attr <- function(x,...)UseMethod('obj_attr')
 #' @inheritParams obj_attr
 #' @return a named list of formulas in the form object ~ attribute
 #' @export
+#' @keywords internal
 obj_attr.character <- function(x,...){
   x <- x[grepl( '_.',x)]
   y <- strsplit(x,'_') # all these should have two elements
@@ -408,6 +532,8 @@ obj_attr.character <- function(x,...){
 #' @inheritParams obj_attr
 #' @return a list of formulas in the form object ~ attribute
 #' @import encode
+#' @seealso \code{\link{obj_attr.character}}
+#' @keywords internal
 #' @export
 obj_attr.data.frame <- function(x,...)obj_attr(names(x),...)
 
@@ -505,44 +631,45 @@ unique.folded <- function(x, incomparables = FALSE,...){
   y
 }
 
-#' Interpret something
-#' 
-#' Interprets something.
-#' 
-#' @param x object
-#' @param ... passed arguments
-#' @export
-interpret <- function(x,...)UseMethod('interpret')
-
-#' Interpret Data in Folded Format
-#' 
-#' Interprets data in folded format.  Specifically, substitutes decodes for codes
-#' when presenting encoded variables.
-#' @inheritParams interpret
-#' @importFrom stats as.formula
-#' @importFrom utils read.table
-#' @return folded data.frame
-#' @export
-interpret.folded <- function(x,...){
-  meta <- x %>% 
-    dplyr::filter(META %in% c('GUIDE','LABEL')) %>%
-    tidyr::spread(META,VALUE) %>% 
-    dplyr::select(VARIABLE,GUIDE,LABEL) %>% 
-    mutate(encoded = encoded(GUIDE))
-  x <- dplyr::filter(x,!META %in% c('GUIDE','LABEL'))
-  x <- left_join(x,meta,by='VARIABLE')
-  x <- mutate(x,VARIABLE = if_else(
-    encoded,
-    LABEL,
-    paste(LABEL,paste0('(',GUIDE,')'))
-  )) %>% dplyr::select(-encoded,-LABEL)
-  x <- 
-    dplyr::group_by(x,VARIABLE) %>%
-    mutate(VALUE = decode(VALUE,GUIDE[[1]])) %>%
-    ungroup %>%
-    dplyr::select(-GUIDE)
-  x
-}
+#  #' Interpret something
+#  #'
+#  #' Interprets something.
+#  #'
+#  #' @param x object
+#  #' @param ... passed arguments
+#  #' @export
+#  #' @keywords internal
+#  interpret <- function(x,...)UseMethod('interpret')
+#  
+#  #' Interpret Data in Folded Format
+#  #'
+#  #' Interprets data in folded format.  Specifically, substitutes decodes for codes
+#  #' when presenting encoded variables.
+#  #' @inheritParams interpret
+#  #' @importFrom stats as.formula
+#  #' @importFrom utils read.table
+#  #' @return folded data.frame
+#  #' @export
+#  interpret.folded <- function(x,...){
+#    meta <- x %>%
+#      dplyr::filter(META %in% c('GUIDE','LABEL')) %>%
+#      tidyr::spread(META,VALUE) %>%
+#      dplyr::select(VARIABLE,GUIDE,LABEL) %>%
+#      mutate(encoded = encoded(GUIDE))
+#    x <- dplyr::filter(x,!META %in% c('GUIDE','LABEL'))
+#    x <- left_join(x,meta,by='VARIABLE')
+#    x <- mutate(x,VARIABLE = if_else(
+#      encoded,
+#      LABEL,
+#      paste(LABEL,paste0('(',GUIDE,')'))
+#    )) %>% dplyr::select(-encoded,-LABEL)
+#    x <-
+#      dplyr::group_by(x,VARIABLE) %>%
+#      mutate(VALUE = decode(VALUE,GUIDE[[1]])) %>%
+#      ungroup %>%
+#      dplyr::select(-GUIDE)
+#    x
+#  }
 
 metaMerge <- function(x,...)UseMethod('metaMerge')
 metaMerge.list <- function(x,all=TRUE,...){

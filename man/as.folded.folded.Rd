@@ -17,3 +17,4 @@ folded
 \description{
 Coerces to folded format from folded.  A non-operation.
 }
+\keyword{internal}

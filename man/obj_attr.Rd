@@ -14,3 +14,4 @@ obj_attr(x, ...)
 \description{
 Infers object-attribute relationships.
 }
+\keyword{internal}

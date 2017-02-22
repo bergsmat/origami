@@ -14,3 +14,4 @@ as.folded(x, ...)
 \description{
 Coerces to folded format.
 }
+\keyword{internal}
