@@ -54,14 +54,11 @@ x %<>% mutate(
 
 head(x)
 x %>% fold %>% data.frame
-x %>% fold %>% groups
+nrow(x)
 x %>% fold %>% unfold
-identical(x, unfold(fold(x)))
-identical(names(x),names(unfold(fold(x))))
-setequal(names(x),names(unfold(fold(x))))
-names(x)
-names(unfold(fold(x)))
-setdiff(names(x),names(unfold(fold(x))))
-setdiff(names(unfold(fold(x))),names(x))
-head(x)
-x %>% fold %>% unfold %>% data.frame %>% head
+x %>% filter(USUBJID == 'Jill') %>% fold %>% unfold
+x %>% select(C:DV) %>% select(-ID) %>% fold %>% unfold
+x %<>% select(C)
+x
+debug(fold)
+x %>% fold

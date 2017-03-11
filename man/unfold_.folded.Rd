@@ -11,7 +11,7 @@
 
 \item{...}{ignored arguments}
 
-\item{var}{variables to unfold, given as unquoted names}
+\item{var}{character: variables to unfold}
 }
 \value{
 data.frame

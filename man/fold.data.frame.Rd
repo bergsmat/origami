@@ -5,14 +5,14 @@
 \title{Fold a Data Frame}
 \usage{
 \method{fold}{data.frame}(x, ..., group_by = groups(x), meta = obj_attr(x),
-  simplify = TRUE, sort = TRUE)
+  simplify = FALSE, sort = TRUE)
 }
 \arguments{
 \item{x}{data.frame}
 
 \item{...}{unquoted names of grouping columns; overrides \code{group_by}}
 
-\item{group_by}{a vector of column names serving as key: included in result but not stacked}
+\item{group_by}{a vector of column names serving as key: included as columns in the result}
 
 \item{meta}{a list of formulas in the form object ~ attribute. Pass something with length 0 to suppress guessing.}
 

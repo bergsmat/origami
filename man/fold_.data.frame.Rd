@@ -5,7 +5,7 @@
 \title{Fold a Data.frame, Standard Evaluation}
 \usage{
 \method{fold_}{data.frame}(x, ..., args, group_by = groups(x),
-  meta = obj_attr(x), simplify = TRUE, sort = TRUE)
+  meta = obj_attr(x), simplify = FALSE, sort = TRUE)
 }
 \arguments{
 \item{x}{data.frame}

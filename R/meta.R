@@ -17,7 +17,7 @@ globalVariables('VARIABLE')
 #' @import csv
 #' @export
 as.csv.folded <- function(x,...){
-  class(x) <- data.frame
+  class(x) <- 'data.frame'
   csv::as.csv(x,...)
 }
 
@@ -62,7 +62,7 @@ as.folded.folded <- function(x,...)x
 #' 
 #' Coerces to folded from data.frame.
 #' 
-#' Expects columns VARIABLE, META, and VALUE. Remaining columns are for classification and may be NA. Coerces VALUE to character. Removes duplicate records with warning. Sorts on non-value columns by default. Groups by columns other than VALUE.
+#' Expects columns VARIABLE, META, and VALUE. Remaining columns are for classification and may be NA. Coerces VALUE to character. Removes duplicate records with warning. Sorts on non-value columns by default. Groups by columns other than VALUE. Assigns class \code{folded}.
 #' 
 #' @inheritParams as.folded
 #' @param sort Should the result be sorted?
@@ -77,8 +77,8 @@ as.folded.data.frame <- function(x, sort = TRUE, ...){
     all(constitutive %in% names(x))
   )
   x <- x[,c(constitutive,extras),drop=FALSE]
-  if(any(duplicated(x))){
-    warning('removing duplicates')
+  if(anyDuplicated(x)){
+    warning('removing duplicates ')
     x <- unique(x)
   }
   x <- group_by_(x, .dots = setdiff(names(x),'VALUE'))
@@ -89,14 +89,14 @@ as.folded.data.frame <- function(x, sort = TRUE, ...){
     eg <- d[1,,drop=FALSE]
     nms <- paste(names(eg),collapse=', ')
     eg <- do.call(paste,c(as.list(eg),list(collapse=', ')))
-    warning('removing duplicates of ',nms,' e.g. ',eg)
+    warning('removing duplicates of ',nms,' e.g. ',eg,' ')
   }
   d <- dplyr::select(x,-VALUE)
   if(ncol(d) > 2) d <- d[,1:(ncol(d) - 1),drop=FALSE] # select all but last
   d <- d[duplicated(d),,drop=FALSE]
   if(!nrow(d)){
     col <- names(d)[ncol(d)]
-    warning('records not duplicated even without ',col)
+    # warning('records not duplicated even without ',col) # fix
   }
   class(x) <- union('folded',class(x))
   x
@@ -150,6 +150,7 @@ distill.data.frame <- function(
   data <-  dplyr::filter(x, VARIABLE == mission & META %>% is.na)
   if(nrow(data)) {
     data <- tidyr::spread(data,VARIABLE,VALUE,convert=TRUE)
+    data <- dplyr::ungroup(data)
     data <- dplyr::select(data,-META) 
     data <- .informative(data)
     res <- data
@@ -161,6 +162,7 @@ distill.data.frame <- function(
       me <- meta
       me <- dplyr::filter(me, META == m) 
       me <- tidyr::spread(me, META,VALUE) 
+      me <- dplyr::ungroup(me)
       me <- dplyr::select(me, -VARIABLE)
       me <-  .informative(me)
       lineage <- c(parent,mission)
@@ -214,12 +216,18 @@ unfold_ <- function(x,...)UseMethod('unfold_')
 #' @param ... variables to unfold, given as unquoted names
 #' @seealso fold_.data.frame
 #' @return data.frame
-#' @importFrom lazyeval dots_capture
+#' @importFrom lazyeval dots_capture f_rhs
 #' @export
 unfold.folded <- function(  
   x,
   ...
-)unfold_(x, var = dots_capture(...))
+){
+  var <- dots_capture(...)
+  if(length(var)) var <- var[is.na(names(var)) | names(var) == '']
+  var <- sapply(var,f_rhs)
+  var <- sapply(var, as.character)
+  unfold_(x, var = var)
+}
   
 #' Unfold a Folded Data.frame, Standard Evaluation
 #' 
@@ -229,7 +237,7 @@ unfold.folded <- function(
 #' 
 #' @param x folded data.frame
 #' @param ... ignored arguments
-#' @param var variables to unfold, given as unquoted names
+#' @param var character: variables to unfold
 #' @return data.frame
 #' @keywords internal
 #' @seealso fold.data.frame
@@ -240,7 +248,7 @@ unfold_.folded <- function(
   ... ,
   var
 ){
-  if(length(var) == 0) var = unique(x$VARIABLE[is.na(x$META)])
+  if(length(var) == 0) var <-  unique(x$VARIABLE[is.na(x$META)])
   groups <- setdiff(names(x),c('VARIABLE','META','VALUE'))
   y <- lapply(var,function(v)distill(x,mission=v,...))
   z <- metaMerge(y)
@@ -384,7 +392,9 @@ fold <- function(x, ... )UseMethod('fold')
 #' 
 #' Likewise, names of metatdata items appear in META, while the name of the described data item appears in VARIABLE.  Values of metadata items appear in VALUE.  If the item is a factor, the metadata VALUE will be an encoding (see package: encode). Metadata items are identified explicitly using a list of formulas, or implicitly by means of column naming conventions.
 #' 
-#' Grouping items in the input persist in the result and serve as keys.  Both data and metadata values may have keys, but neither require them.  Keys are identified explicitly by supplying a group_by argument (or unnamed, unquoted arguments for non-standard evaluation), or implicitly when \code{x} is a grouped data.frame (\code{grouped_df}).   By default, superflous keys (those that do not help distinguish data items) are removed on a per-data-item basis.
+#' Grouping items in the input persist in the result and serve as keys.  Both data and metadata values may have keys, but neither require them.  Keys are identified explicitly by supplying a group_by argument (or unnamed, unquoted arguments for non-standard evaluation), or implicitly when \code{x} is a grouped data.frame (\code{grouped_df}).   
+#' 
+#' By default, superflous keys (those that do not help distinguish data items) are removed on a per-data-item basis. Column order is used to resolve ambiguities: checking proceeds right to left, preferentially discarding keys to the right.
 #'
 #' Note that metadata items may describe other metadata items, recursively.  In practice, however, such complexity could be problematic and is best avoided if possible.
 #' 
@@ -394,7 +404,7 @@ fold <- function(x, ... )UseMethod('fold')
 
 #' @param x data.frame
 #' @param ... unquoted names of grouping columns; overrides \code{group_by}
-#' @param group_by a vector of column names serving as key: included in result but not stacked
+#' @param group_by a vector of column names serving as key: included as columns in the result
 #' @param meta a list of formulas in the form object ~ attribute. Pass something with length 0 to suppress guessing.
 #' @param simplify set to NA any group_by values that do not help distinguish values, and remove resulting duplicate records
 #' @param sort whether to sort the result
@@ -406,7 +416,7 @@ fold.data.frame <- function(
   ... ,
   group_by = groups(x),
   meta = obj_attr(x),
-  simplify = TRUE,
+  simplify = FALSE,
   sort = TRUE
 ){
   fold_.data.frame(
@@ -454,13 +464,13 @@ fold_.data.frame <- function(
   args,
   group_by = groups(x),
   meta = obj_attr(x),
-  simplify = TRUE,
+  simplify = FALSE,
   sort = TRUE
 ){
   if(length(group_by)) x <- group_by_(x, .dots = group_by)
-  if(length(args))args <- args[is.na(names(args))]
-  if(length(args))x <- group_by(x, args)
-  if(length(groups(x)) == 0)warning('Nothing to group by.  Do you need to supply groups?')
+  if(length(args))args <- args[is.na(names(args)) | names(args) == '']
+  if(length(args))x <- group_by_(x, .dots = args)
+  if(length(groups(x)) == 0 & nrow(x) > 1)warning('Nothing to group by.  Do you need to supply groups?')
   # meta
   VARIABLE <- sapply(meta,function(f)f %>% as.list %>% `[[`(2) %>% as.character)
   META     <- sapply(meta,function(f)f %>% as.list %>% `[[`(3) %>% as.character)
@@ -472,7 +482,7 @@ fold_.data.frame <- function(
   d <- mutate(d,META=NA_character_)
   d <- mutate(d,VALUE = VALUE %>% as.character)
   d <- as.folded(d)
-  if(simplify) d <- unique(reduce(d))
+  if(simplify) d <- simplify(d)
   if(nrow(table)){
     m <- x
     for(i in seq_along(m))if(is.factor(m[[i]]))m[[i]] <- as.character(m[[i]]) 
@@ -496,8 +506,8 @@ fold_.data.frame <- function(
         m$VALUE[m$VARIABLE == var & m$META == met] <- encoding
       }
     }
-    if(simplify) m <- unique(reduce(m))
-    m <- dplyr::select_(m,.dots=c('VARIABLE','META','VALUE',groups(x)))
+    if(simplify) m <- simplify(m)
+    #m <- dplyr::select_(m,.dots=c('VARIABLE','META','VALUE',intersect(groups(x),names(m))))
     d <- bind_rows(m,d)
   }
   d <- as.folded(d, sort = sort, ...)
@@ -544,14 +554,23 @@ obj_attr.character <- function(x,...){
 #' @export
 obj_attr.data.frame <- function(x,...)obj_attr(names(x),...)
 
-print.folded <- function(x,...){
-  x[] <- lapply(x,shortOrNot)
+#' Print Folded
+#' 
+#' Prints folded. Specifically, shortens display of encoded items that are above limit.
+#' @param x folded
+#' @param limit number of characters to allow without intervention
+#' @param ... passed arguments
+#' @export
+#' @keywords internal
+#' @return character
+print.folded <- function(x, limit = 8, ...){
+  x[] <- lapply(x,shortOrNot, limit = limit, ...)
   NextMethod()
 }
 
-shortOrNot <- function(x){
+shortOrNot <- function(x, limit = 8, ...){
   if(!is.character(x)) return(x)
-  if(any(nchar(x[is.defined(x)]) > 8)){
+  if(any(nchar(x[is.defined(x)]) > limit)){
     if(any(encoded(x[is.defined(x)]))){
       return(short(x))
     }
@@ -606,22 +625,82 @@ decode.data.frame <- function(
   x
 }
 
-reduce <- function(x,...)UseMethod('reduce')
-reduce.folded <- function(x,ignore=character(0),protect=FALSE,...){
-  classifiers <- setdiff(names(x),c('VARIABLE','META','VALUE'))
-  classifiers <- setdiff(classifiers,ignore)
-  if(!length(classifiers))return(x)
-  test <- rev(classifiers)[[1]]
-  remaining <- setdiff(classifiers,test)
-  y <- x %>% dplyr::group_by_(.dots=c('VARIABLE','META',remaining))
-  y <- mutate(y, count = length(unique(VALUE)))
-  y$protect <- protect
-  target <- y$count == 1 & !y$protect
-  y[[test]][target] <- NA
-  y$count <- NULL
-  y$protect <- NULL
-  reduce.folded(y,ignore=c(test,ignore),protect = !target, ...)
+#' Simplify Something
+#' 
+#' Simplifies something.
+#' 
+#' @param x object
+#' @param ... passed arguments
+#' @export
+simplify <- function(x,...)UseMethod('simplify')
+
+#' Simplify Folded
+#' 
+#' Simplify folded. Per each combination of VARIABLE and META, find the minimum left subset of remaining columns necessary for uniquely distinguishing VALUE, setting other columns to NA. Then drop columns that are completely NA and remove duplicate records.
+
+#' 
+#' @param x folded
+#' @param ... passed arguments
+#' @export
+#' @return folded
+# simplify.folded <- function(x,ignore=character(0),protect=FALSE,...){
+#   classifiers <- setdiff(names(x),c('VARIABLE','META','VALUE'))
+#   classifiers <- setdiff(classifiers,ignore)
+#   if(!length(classifiers))return(x)
+#   test <- rev(classifiers)[[1]]
+#   remaining <- setdiff(classifiers,test)
+#   y <- x %>% dplyr::group_by_(.dots=c('VARIABLE','META',remaining))
+#   y <- mutate(y, count = length(unique(VALUE)))
+#   y$protect <- protect
+#   target <- y$count == 1 & !y$protect
+#   y[[test]][target] <- NA
+#   y$count <- NULL
+#   y$protect <- NULL
+#   reduce.folded(y,ignore=c(test,ignore),protect = !target, ...)
+# }
+
+# simplify.folded <- function(x,...){
+#   # needs more distinguishers, cannot be simpler i.e. not overdistinguished
+#   if(nrow(distinct(x)) < nrow(x)) return(x) 
+#   # these are constitutive, cannot be simplified
+#   key <- sapply(groups(x),as.character)
+#   if(!length(key))stop('no groups found')
+#   t <- rev(key)[[1]]
+#   if(t %in% c('VARIABLE','META')) return(x)
+#   # if we got here, we have post-META groups and records are distinct.
+#   key <- setdiff(key,t) # proposed key
+#   y <- x %>% group_by_(.dots=key)
+#   y %<>% mutate(.n_distinct = n_distinct(VALUE)) # where only 1 value under the proposed key, terminal is superfluous  
+#   y %<>% group_by(VARIABLE,META) 
+#   y %<>% mutate(.superfluous = all(.n_distinct == 1)) # verify at attribute level
+#   y[[t]][y$.superfluous] <- NA # adjust classifier
+#   y %<>% group_by_(.dots=key) # restore proposed key
+#   y %<>% simplify # iterate
+#   y %<>% informative # drop completely NA cols
+#   y %<>% group_by_(.dots = union(c('VARIABLE','META'), setdiff(names(.),'VALUE'))) # recalculate groups
+#   y
+# }
+
+simplify.folded <- function(x,...){
+  x %<>% group_by(VARIABLE,META)
+  x %<>% mutate(.n = n_distinct(VALUE))
+  satisfied <- x$.n == 1
+  x$.n <- NULL
+  key <- c('VARIABLE','META')
+  for(col in setdiff(names(x),c('VARIABLE','META','VALUE'))){
+    key <- c(key,col)
+    x[[col]][satisfied] <- NA
+    x %<>% group_by_(.dots = key)
+    x %<>% mutate(.n = n_distinct(VALUE))
+    satisfied <- x$.n == 1
+    x$.n <- NULL
+  }
+  x %<>% .informative
+  x %<>% group_by_(.dots = setdiff(names(x),'VALUE'))
+  x %<>% unique
+  x
 }
+
 
 is.defined <- function(x,...)!is.na(x)
 map <- function (x, from, to, strict = TRUE, ...) 
