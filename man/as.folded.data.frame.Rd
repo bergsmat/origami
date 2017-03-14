@@ -20,5 +20,5 @@ folded
 Coerces to folded from data.frame.
 }
 \details{
-Expects columns VARIABLE, META, and VALUE. Remaining columns are for classification and may be NA. Coerces VALUE to character. Removes duplicate records with warning. Sorts on non-value columns by default. Groups by columns other than VALUE.
+Expects columns VARIABLE, META, and VALUE. Remaining columns are for classification and may be NA. Coerces VALUE to character. Removes duplicate records with warning. Sorts on non-value columns by default. Groups by columns other than VALUE. Assigns class \code{folded}.
 }

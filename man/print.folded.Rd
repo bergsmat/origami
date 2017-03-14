@@ -4,7 +4,7 @@
 \alias{print.folded}
 \title{Print Folded}
 \usage{
-\method{print}{folded}(x, limit = 8, ...)
+\method{print}{folded}(x, limit = 8, n = 10, ...)
 }
 \arguments{
 \item{x}{folded}

@@ -5,7 +5,7 @@
 \title{Fold a Data Frame}
 \usage{
 \method{fold}{data.frame}(x, ..., group_by = groups(x), meta = obj_attr(x),
-  simplify = FALSE, sort = TRUE)
+  simplify = TRUE, sort = TRUE)
 }
 \arguments{
 \item{x}{data.frame}
@@ -33,7 +33,9 @@ In the result, names of data items appear in VARIABLE, while values of data item
 
 Likewise, names of metatdata items appear in META, while the name of the described data item appears in VARIABLE.  Values of metadata items appear in VALUE.  If the item is a factor, the metadata VALUE will be an encoding (see package: encode). Metadata items are identified explicitly using a list of formulas, or implicitly by means of column naming conventions.
 
-Grouping items in the input persist in the result and serve as keys.  Both data and metadata values may have keys, but neither require them.  Keys are identified explicitly by supplying a group_by argument (or unnamed, unquoted arguments for non-standard evaluation), or implicitly when \code{x} is a grouped data.frame (\code{grouped_df}).   By default, superflous keys (those that do not help distinguish data items) are removed on a per-data-item basis.
+Grouping items in the input persist in the result and serve as keys.  Both data and metadata values may have keys, but neither require them.  Keys are identified explicitly by supplying a group_by argument (or unnamed, unquoted arguments for non-standard evaluation), or implicitly when \code{x} is a grouped data.frame (\code{grouped_df}).
+
+By default, superflous keys (those that do not help distinguish data items) are removed on a per-data-item basis. Column order is used to resolve ambiguities: checking proceeds right to left, preferentially discarding keys to the right.
 
 Note that metadata items may describe other metadata items, recursively.  In practice, however, such complexity could be problematic and is best avoided if possible.
 

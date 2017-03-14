@@ -374,12 +374,13 @@ arrange_.folded <- function(.data, ..., .dots){
 
 #' Fold an Object
 #' 
-#' Folds an object.
+#' Folds an object. A method is supplied for \code{data.frame}. The actual work is done by \code{\link{fold_.data.frame}}.
 #' 
 #' @param x object
 #' @param ... passed arguments
 #' @export
 #' @keywords internal
+#' @seealso \code{\link{fold.data.frame}}
 fold <- function(x, ... )UseMethod('fold')
 
 #' Fold a Data Frame
@@ -416,7 +417,7 @@ fold.data.frame <- function(
   ... ,
   group_by = groups(x),
   meta = obj_attr(x),
-  simplify = FALSE,
+  simplify = TRUE,
   sort = TRUE
 ){
   fold_.data.frame(
@@ -464,7 +465,7 @@ fold_.data.frame <- function(
   args,
   group_by = groups(x),
   meta = obj_attr(x),
-  simplify = FALSE,
+  simplify = TRUE,
   sort = TRUE
 ){
   if(length(group_by)) x <- group_by_(x, .dots = group_by)
@@ -481,8 +482,8 @@ fold_.data.frame <- function(
   d <- tidyr::gather_(d,'VARIABLE','VALUE',setdiff(names(d),groups(x)))
   d <- mutate(d,META=NA_character_)
   d <- mutate(d,VALUE = VALUE %>% as.character)
-  d <- as.folded(d)
-  if(simplify) d <- simplify(d)
+  d <- as.folded(d, sort = sort, ...)
+  if(simplify) d <- simplify(d,...)
   if(nrow(table)){
     m <- x
     for(i in seq_along(m))if(is.factor(m[[i]]))m[[i]] <- as.character(m[[i]]) 
@@ -494,7 +495,7 @@ fold_.data.frame <- function(
       unique
     m <- left_join(m,table,by='COL') %>% dplyr::select(-COL)
     m <- dplyr::select_(m,.dots=c('VARIABLE','META','VALUE',groups(x)))
-    m <- as.folded(m)
+    m <- as.folded(m, sort = sort, ...)
     for(i in 1:nrow(table)){
       var <- table[i,'VARIABLE']
       met <- table[i,'META']
@@ -506,7 +507,7 @@ fold_.data.frame <- function(
         m$VALUE[m$VARIABLE == var & m$META == met] <- encoding
       }
     }
-    if(simplify) m <- simplify(m)
+    if(simplify) m <- simplify(m,...)
     #m <- dplyr::select_(m,.dots=c('VARIABLE','META','VALUE',intersect(groups(x),names(m))))
     d <- bind_rows(m,d)
   }
@@ -563,25 +564,26 @@ obj_attr.data.frame <- function(x,...)obj_attr(names(x),...)
 #' @export
 #' @keywords internal
 #' @return character
-print.folded <- function(x, limit = 8, ...){
-  x[] <- lapply(x,shortOrNot, limit = limit, ...)
+print.folded <- function(x, limit = 8, n = 10, ...){
+  x[] <- lapply(x,shortOrNot, limit = limit, n = n, ...)
   NextMethod()
 }
 
-shortOrNot <- function(x, limit = 8, ...){
+shortOrNot <- function(x, limit = 8, n = 10, ...){
   if(!is.character(x)) return(x)
-  if(any(nchar(x[is.defined(x)]) > limit)){
-    if(any(encoded(x[is.defined(x)]))){
-      return(short(x))
-    }
-  }
+  test <- x[seq_len(n)]
+  chars <- nchar(test)
+  chars[is.na(chars)] <- 0
+  enc <- encoded(test)
+  issues <- enc & chars > limit
+  if(any(issues)) x[seq_len(n)] <- short(x[seq_len(n)], n = limit)
   return(x)
 }
 
-short <- function(x){
-  y <- substr(x,1,8)
+short <- function(x, n = 8 ){
+  y <- substr(x,1, n)
   nchar <- nchar(x)
-  y <- paste0(y,ifelse(nchar>8,'...',''))
+  y <- paste0(y,ifelse(nchar > n,'...',''))
   y <- as.character(y)
   y[is.na(x)] <- NA_character_
   y
@@ -683,19 +685,20 @@ simplify <- function(x,...)UseMethod('simplify')
 
 simplify.folded <- function(x,...){
   x %<>% group_by(VARIABLE,META)
-  x %<>% mutate(.n = n_distinct(VALUE))
-  satisfied <- x$.n == 1
-  x$.n <- NULL
   key <- c('VARIABLE','META')
-  for(col in setdiff(names(x),c('VARIABLE','META','VALUE'))){
+  modifiers <- setdiff(names(x),c('VARIABLE','META','VALUE'))
+  for(col in modifiers){
+    x$.key <- do.call(paste,c(x[key],list(sep='\r')))
+    x %<>% group_by(.key)
+    x %<>% mutate(.n = length(unique(VALUE)))
+    x %<>% group_by(VARIABLE,META)
+    x %<>% mutate(.satisfied = all(.n == 1))
+    #x %<>% mutate_(.satisfied = constant(.[['VALUE']],within=.[key]))
+    x[[col]][x$.satisfied] <- NA
     key <- c(key,col)
-    x[[col]][satisfied] <- NA
-    x %<>% group_by_(.dots = key)
-    x %<>% mutate(.n = n_distinct(VALUE))
-    satisfied <- x$.n == 1
-    x$.n <- NULL
   }
-  x %<>% .informative
+  x %<>% select(-.key,-.n,-.satisfied)
+  for(col in modifiers)if(all(is.na(x[[col]])))x[col] <- NULL
   x %<>% group_by_(.dots = setdiff(names(x),'VALUE'))
   x %<>% unique
   x

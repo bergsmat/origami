@@ -12,6 +12,9 @@ fold(x, ...)
 \item{...}{passed arguments}
 }
 \description{
-Folds an object.
+Folds an object. A method is supplied for \code{data.frame}. The actual work is done by \code{\link{fold_.data.frame}}.
+}
+\seealso{
+\code{\link{fold.data.frame}}
 }
 \keyword{internal}
