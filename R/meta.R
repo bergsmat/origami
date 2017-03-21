@@ -218,16 +218,7 @@ unfold_ <- function(x,...)UseMethod('unfold_')
 #' @return data.frame
 #' @importFrom lazyeval dots_capture f_rhs
 #' @export
-unfold.folded <- function(  
-  x,
-  ...
-){
-  var <- dots_capture(...)
-  if(length(var)) var <- var[is.na(names(var)) | names(var) == '']
-  var <- sapply(var,f_rhs)
-  var <- sapply(var, as.character)
-  unfold_(x, var = var)
-}
+unfold.folded <- function(x, ...)unfold_(x, var = dots_capture(...))
   
 #' Unfold a Folded Data.frame, Standard Evaluation
 #' 
@@ -237,7 +228,7 @@ unfold.folded <- function(
 #' 
 #' @param x folded data.frame
 #' @param ... ignored arguments
-#' @param var character: variables to unfold
+#' @param var variables to unfold: character vector or list of formulas
 #' @return data.frame
 #' @keywords internal
 #' @seealso fold.data.frame
@@ -245,11 +236,18 @@ unfold.folded <- function(
 #' @importFrom utils read.table 
 unfold_.folded <- function(  
   x,
-  ... ,
-  var
+  var,
+  ...
 ){
   if(length(var) == 0) var <-  unique(x$VARIABLE[is.na(x$META)])
+  if(is.list(var)){
+    var <- lapply(var, f_rhs)
+    var <- var[names(var) == ''] # only anonymous arguments
+    var <- sapply(var, as.character)
+  }
   groups <- setdiff(names(x),c('VARIABLE','META','VALUE'))
+  x <- data.frame(x, stringsAsFactors = FALSE) # much faster with grouped_df removed
+  class(x) <- c('folded','data.frame')
   y <- lapply(var,function(v)distill(x,mission=v,...))
   z <- metaMerge(y)
   groups <- intersect(groups,names(z))
