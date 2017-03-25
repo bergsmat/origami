@@ -62,7 +62,7 @@ as.folded.folded <- function(x,...)x
 #' 
 #' Coerces to folded from data.frame.
 #' 
-#' Expects columns VARIABLE, META, and VALUE. Remaining columns are for classification and may be NA. Coerces VALUE to character. Removes duplicate records with warning. Sorts on non-value columns by default. Groups by columns other than VALUE. Assigns class \code{folded}.
+#' Expects columns VARIABLE, META, and VALUE. Remaining columns are for classification and may be NA. Coerces VALUE to character. Removes duplicate records with warning. Sorts on non-value columns by default. Assigns class \code{folded}.
 #' 
 #' @inheritParams as.folded
 #' @param sort Should the result be sorted?
@@ -72,17 +72,14 @@ as.folded.folded <- function(x,...)x
 as.folded.data.frame <- function(x, sort = TRUE, ...){
   constitutive <- c('VARIABLE','META','VALUE')
   extras <- setdiff(names(x),constitutive)
-  last <- if(length(extras)) rev(extras)[[1]] else character(0)
-  stopifnot(
-    all(constitutive %in% names(x))
-  )
+  stopifnot(all(constitutive %in% names(x)))
   x <- x[,c(constitutive,extras),drop=FALSE]
   if(anyDuplicated(x)){
     warning('removing duplicates ')
     x <- unique(x)
   }
-  x <- group_by_(x, .dots = setdiff(names(x),'VALUE'))
-  if(sort) x <-  dplyr::arrange_(x,.dots=setdiff(names(x),'VALUE'))
+  #x <- group_by_(x, .dots = setdiff(names(x),'VALUE'))
+  if(sort) x <-  sort.folded(x,...)
   d <- dplyr::select(x,-VALUE)
   d <- d[duplicated(d),,drop=FALSE]
   if(nrow(d)){
@@ -99,6 +96,22 @@ as.folded.data.frame <- function(x, sort = TRUE, ...){
     # warning('records not duplicated even without ',col) # fix
   }
   class(x) <- union('folded',class(x))
+  x
+}
+
+#' Sort Folded
+#' 
+#' Sorts folded.
+#' @param x folded
+#' @param decreasing logical
+#' @param ... ignored arguments
+#' @return folded
+#' @import dplyr
+#' @export
+sort.folded <- function(x, decreasing = FALSE,...){
+  x <-  dplyr::arrange_(x,.dots=setdiff(names(x),'VALUE'))
+  if(decreasing) x <- x[rev(rownames(x)),]
+  rownames(x) <- NULL
   x
 }
 
@@ -250,8 +263,8 @@ unfold_.folded <- function(
   class(x) <- c('folded','data.frame')
   y <- lapply(var,function(v)distill(x,mission=v,...))
   z <- metaMerge(y)
-  groups <- intersect(groups,names(z))
-  z <- dplyr::group_by_(z,.dots=groups)
+  # groups <- intersect(groups,names(z))
+  # z <- dplyr::group_by_(z,.dots=groups)
   z
 }
 
@@ -391,7 +404,7 @@ fold <- function(x, ... )UseMethod('fold')
 #' 
 #' Likewise, names of metatdata items appear in META, while the name of the described data item appears in VARIABLE.  Values of metadata items appear in VALUE.  If the item is a factor, the metadata VALUE will be an encoding (see package: encode). Metadata items are identified explicitly using a list of formulas, or implicitly by means of column naming conventions.
 #' 
-#' Grouping items in the input persist in the result and serve as keys.  Both data and metadata values may have keys, but neither require them.  Keys are identified explicitly by supplying a group_by argument (or unnamed, unquoted arguments for non-standard evaluation), or implicitly when \code{x} is a grouped data.frame (\code{grouped_df}).   
+#' Grouping items in the input persist in the result and serve as keys.  Both data and metadata values may have keys, but neither require them.  Keys are identified explicitly by supplying a groups argument (or unnamed, unquoted arguments for non-standard evaluation), or implicitly when \code{x} is a grouped data.frame (\code{grouped_df}).   
 #' 
 #' By default, superflous keys (those that do not help distinguish data items) are removed on a per-data-item basis. Column order is used to resolve ambiguities: checking proceeds right to left, preferentially discarding keys to the right.
 #'
@@ -402,10 +415,10 @@ fold <- function(x, ... )UseMethod('fold')
 #' The folded format supports mixed object types, as inferred from differences in relevant grouping items on a per record basis.  Mixed typing works best when object types form a nested hierarchy, i.e. all keys are left-subsets of the full key. Thus the order of grouping values is considered informative, e.g. for sorting.
 
 #' @param x data.frame
-#' @param ... unquoted names of grouping columns; overrides \code{group_by}
-#' @param group_by a vector of column names serving as key: included as columns in the result
+#' @param ... unquoted names of grouping columns; overrides \code{groups}
+#' @param groups a vector of column names serving as key: included as columns in the result
 #' @param meta a list of formulas in the form object ~ attribute. Pass something with length 0 to suppress guessing.
-#' @param simplify set to NA any group_by values that do not help distinguish values, and remove resulting duplicate records
+#' @param simplify set to NA any groups values that do not help distinguish values, and remove resulting duplicate records
 #' @param sort whether to sort the result
 #' @return folded data.frame with columns VARIABLE, META, VALUE and any supplied grouping items.
 #' @seealso \code{\link{obj_attr.data.frame}} \code{\link{fold_.data.frame}}
@@ -413,7 +426,7 @@ fold <- function(x, ... )UseMethod('fold')
 fold.data.frame <- function(
   x,
   ... ,
-  group_by = groups(x),
+  groups = character(0),
   meta = obj_attr(x),
   simplify = TRUE,
   sort = TRUE
@@ -421,12 +434,27 @@ fold.data.frame <- function(
   fold_.data.frame(
     x,
     args = dots_capture(...),
-    group_by = group_by,
+    groups = groups,
     meta = meta,
     simplify = simplify,
     sort = sort
   )
 }
+
+#' Fold grouped_df
+#' 
+#' Folds grouped_df, unclassing and passing groups explcitly.
+#' @param x grouped_df
+#' @param ... passed arguments
+#' @export
+#' @return folded
+#' @seealso \code{\link{fold.data.frame}}
+fold.grouped_df <- function(x,...){
+  groups <- groups(x)
+  x <- ungroup(x)
+  fold.data.frame(x, groups = groups, ...)
+}
+
 #' Fold an Object, Standard Evaluation
 #' 
 #' Folds an object using standard evaluation.
@@ -437,15 +465,56 @@ fold.data.frame <- function(
 #' @keywords internal
 fold_ <- function(x, ... )UseMethod('fold_')
 
+#' Fold a grouped_df, Standard Evaluation
+#' 
+#' Folds a grouped data.frame using standard evaluation. Reclassifies as data.frame and passes groups explicitly
+#' @param x data.frame
+#' @param ... ignored arguments
+#' @param args list of formulas representing grouping columns
+#' @param groups a vector of column names serving as key: included in result but not stacked
+#' @param meta a list of formulas in the form object ~ attribute. Pass something with length 0 to suppress guessing.
+#' @param simplify set to NA any groups values that do not help distinguish values, and remove resulting duplicate records
+#' @param sort whether to sort the result
+#' @return folded data.frame with columns VARIABLE, META, VALUE and any supplied grouping items.
+#' @import magrittr dplyr
+#' @importFrom tidyr spread
+#' @importFrom tidyr spread_
+#' @importFrom tidyr gather
+#' @importFrom tidyr gather_
+#' @seealso \code{\link{obj_attr.data.frame}} \code{\link{fold_.data.frame}}
+#' @export
+
+fold_.grouped_df <- function(
+  x,
+  ...,
+  args,
+  groups = match.fun('groups')(x),
+  meta = obj_attr(x),
+  simplify = TRUE,
+  sort = TRUE
+){
+  groups # force the evaluation
+  x <- ungroup(x)
+  fold_.data.frame(
+    x,
+    args = args, 
+    groups = groups,
+    meta = meta,
+    simplify = simplify,
+    sort = sort,
+    ...
+  )
+}
+
 #' Fold a Data.frame, Standard Evaluation
 #' 
 #' Folds a data.frame using standard evaluation. See also \code{\link{fold.data.frame}}.
 #' @param x data.frame
 #' @param ... ignored arguments
-#' @param args list of formulas representing grouping columns
-#' @param group_by a vector of column names serving as key: included in result but not stacked
+#' @param args list of formulas representing grouping columns; overrides groups
+#' @param groups a vector of column names serving as key: included in result but not stacked
 #' @param meta a list of formulas in the form object ~ attribute. Pass something with length 0 to suppress guessing.
-#' @param simplify set to NA any group_by values that do not help distinguish values, and remove resulting duplicate records
+#' @param simplify set to NA any groups values that do not help distinguish values, and remove resulting duplicate records
 #' @param sort whether to sort the result
 #' @return folded data.frame with columns VARIABLE, META, VALUE and any supplied grouping items.
 #' @import magrittr dplyr
@@ -454,22 +523,22 @@ fold_ <- function(x, ... )UseMethod('fold_')
 #' @importFrom tidyr gather
 #' @importFrom tidyr gather_
 #' @seealso \code{\link{obj_attr.data.frame}} \code{\link{fold.data.frame}}
-#' @keywords internal
 #' @export
 
 fold_.data.frame <- function(
   x,
   ...,
   args,
-  group_by = groups(x),
+  groups = character(0),
   meta = obj_attr(x),
   simplify = TRUE,
   sort = TRUE
 ){
-  if(length(group_by)) x <- group_by_(x, .dots = group_by)
+  # if(length(group_by)) x <- group_by_(x, .dots = group_by)
   if(length(args))args <- args[is.na(names(args)) | names(args) == '']
-  if(length(args))x <- group_by_(x, .dots = args)
-  if(length(groups(x)) == 0 & nrow(x) > 1)warning('Nothing to group by.  Do you need to supply groups?')
+  # if(length(args))x <- group_by_(x, .dots = args)
+  if(length(args))groups = args
+  if(length(groups) == 0 & nrow(x) > 1)warning('Nothing to group by.  Do you need to supply groups?')
   # meta
   VARIABLE <- sapply(meta,function(f)f %>% as.list %>% `[[`(2) %>% as.character)
   META     <- sapply(meta,function(f)f %>% as.list %>% `[[`(3) %>% as.character)
@@ -477,23 +546,23 @@ fold_.data.frame <- function(
   table <- cbind(VARIABLE,META,COL) %>% data.frame(stringsAsFactors = FALSE)
   # data
   d <- x[,setdiff(names(x),COL),drop=F]
-  d <- tidyr::gather_(d,'VARIABLE','VALUE',setdiff(names(d),groups(x)))
+  d <- tidyr::gather_(d,'VARIABLE','VALUE',setdiff(names(d),groups))
   d <- mutate(d,META=NA_character_)
   d <- mutate(d,VALUE = VALUE %>% as.character)
-  d <- as.folded(d, sort = sort, ...)
-  if(simplify) d <- simplify(d,...)
+  #d <- as.folded(d, sort = sort, ...) # takes too long
+  if(simplify) d <- simplify.folded(d,...) # d is data.frame
   if(nrow(table)){
     m <- x
     for(i in seq_along(m))if(is.factor(m[[i]]))m[[i]] <- as.character(m[[i]]) 
     # prevent tidyr warning about differing attributes.  
     # Factor levels to be recovered later from x.
     m %<>% 
-      dplyr::select_(.dots=c(groups(x),COL)) %>% 
+      dplyr::select_(.dots=c(groups,COL)) %>% 
       tidyr::gather_('COL','VALUE',COL) %>%
       unique
     m <- left_join(m,table,by='COL') %>% dplyr::select(-COL)
-    m <- dplyr::select_(m,.dots=c('VARIABLE','META','VALUE',groups(x)))
-    m <- as.folded(m, sort = sort, ...)
+    m <- dplyr::select_(m,.dots=c('VARIABLE','META','VALUE',groups))
+    # m <- as.folded(m, sort = sort, ...)
     for(i in 1:nrow(table)){
       var <- table[i,'VARIABLE']
       met <- table[i,'META']
@@ -682,7 +751,7 @@ simplify <- function(x,...)UseMethod('simplify')
 # }
 
 simplify.folded <- function(x,...){
-  x %<>% group_by(VARIABLE,META)
+  # x %<>% group_by(VARIABLE,META)
   key <- c('VARIABLE','META')
   modifiers <- setdiff(names(x),c('VARIABLE','META','VALUE'))
   for(col in modifiers){
@@ -695,9 +764,10 @@ simplify.folded <- function(x,...){
     x[[col]][x$.satisfied] <- NA
     key <- c(key,col)
   }
-  x %<>% select(-.key,-.n,-.satisfied)
+  if(length(modifiers)) x %<>% select(-.key,-.n,-.satisfied)
+  if(length(modifiers)) x %<>% ungroup
   for(col in modifiers)if(all(is.na(x[[col]])))x[col] <- NULL
-  x %<>% group_by_(.dots = setdiff(names(x),'VALUE'))
+  # x %<>% group_by_(.dots = setdiff(names(x),'VALUE'))
   x %<>% unique
   x
 }
