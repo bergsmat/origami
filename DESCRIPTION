@@ -17,7 +17,6 @@ Imports:
  tidyr,
  dplyr,
  lazyeval,
- magrittr,
  encode,
  csv
 Suggests:

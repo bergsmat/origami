@@ -4,15 +4,11 @@
 \alias{fold_.grouped_df}
 \title{Fold a grouped_df, Standard Evaluation}
 \usage{
-\method{fold_}{grouped_df}(x, ..., args, groups = match.fun("groups")(x),
-  meta = obj_attr(x), simplify = TRUE, sort = TRUE)
+\method{fold_}{grouped_df}(x, groups = match.fun("groups")(x),
+  meta = obj_attr(x), simplify = TRUE, sort = TRUE, ...)
 }
 \arguments{
 \item{x}{data.frame}
-
-\item{...}{ignored arguments}
-
-\item{args}{list of formulas representing grouping columns}
 
 \item{groups}{a vector of column names serving as key: included in result but not stacked}
 
@@ -21,6 +17,8 @@
 \item{simplify}{set to NA any groups values that do not help distinguish values, and remove resulting duplicate records}
 
 \item{sort}{whether to sort the result}
+
+\item{...}{passed arguments}
 }
 \value{
 folded data.frame with columns VARIABLE, META, VALUE and any supplied grouping items.

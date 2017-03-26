@@ -4,15 +4,11 @@
 \alias{fold_.data.frame}
 \title{Fold a Data.frame, Standard Evaluation}
 \usage{
-\method{fold_}{data.frame}(x, ..., args, groups = character(0),
-  meta = obj_attr(x), simplify = TRUE, sort = TRUE)
+\method{fold_}{data.frame}(x, groups = character(0), meta = obj_attr(x),
+  simplify = TRUE, sort = TRUE, tol = 10, ...)
 }
 \arguments{
 \item{x}{data.frame}
-
-\item{...}{ignored arguments}
-
-\item{args}{list of formulas representing grouping columns; overrides groups}
 
 \item{groups}{a vector of column names serving as key: included in result but not stacked}
 
@@ -21,6 +17,10 @@
 \item{simplify}{set to NA any groups values that do not help distinguish values, and remove resulting duplicate records}
 
 \item{sort}{whether to sort the result}
+
+\item{tol}{maximum number of categories for guessing whether to encode metadata; encoding will always be attempted if metadata (attr) or its referent (obj) is a factor}
+
+\item{...}{ignored arguments}
 }
 \value{
 folded data.frame with columns VARIABLE, META, VALUE and any supplied grouping items.

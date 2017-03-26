@@ -4,15 +4,13 @@
 \alias{fold.data.frame}
 \title{Fold a Data Frame}
 \usage{
-\method{fold}{data.frame}(x, ..., groups = character(0), meta = obj_attr(x),
-  simplify = TRUE, sort = TRUE)
+\method{fold}{data.frame}(x, ..., meta = obj_attr(x), simplify = TRUE,
+  sort = TRUE)
 }
 \arguments{
 \item{x}{data.frame}
 
-\item{...}{unquoted names of grouping columns; overrides \code{groups}}
-
-\item{groups}{a vector of column names serving as key: included as columns in the result}
+\item{...}{unquoted names of grouping columns}
 
 \item{meta}{a list of formulas in the form object ~ attribute. Pass something with length 0 to suppress guessing.}
 
@@ -26,23 +24,6 @@ folded data.frame with columns VARIABLE, META, VALUE and any supplied grouping i
 \description{
 Folds a data.frame.  Stacks columns, while isolating metadata and capturing keys.
 }
-\details{
-A Folded data.frame is formalized re-presentation of a conventional data.frame.  Items in the conventional form are of three conceptual types: data, metadata, and keys.  Data items contain the primary values, to be described.  Metadata gives additional details about the data items or values. Keys are grouping items; combinations of grouping values should uniquely identify each conventional record.
-
-In the result, names of data items appear in VARIABLE, while values of data items are stacked in VALUE. Data items are all columns from the input not otherwise identified as metadata or keys.
-
-Likewise, names of metatdata items appear in META, while the name of the described data item appears in VARIABLE.  Values of metadata items appear in VALUE.  If the item is a factor, the metadata VALUE will be an encoding (see package: encode). Metadata items are identified explicitly using a list of formulas, or implicitly by means of column naming conventions.
-
-Grouping items in the input persist in the result and serve as keys.  Both data and metadata values may have keys, but neither require them.  Keys are identified explicitly by supplying a groups argument (or unnamed, unquoted arguments for non-standard evaluation), or implicitly when \code{x} is a grouped data.frame (\code{grouped_df}).
-
-By default, superflous keys (those that do not help distinguish data items) are removed on a per-data-item basis. Column order is used to resolve ambiguities: checking proceeds right to left, preferentially discarding keys to the right.
-
-Note that metadata items may describe other metadata items, recursively.  In practice, however, such complexity could be problematic and is best avoided if possible.
-
-There are cases where a real grouping item may appear superfluous, e.g. for a one-record dataset.  Enforce the groups by setting \code{simplify} to FALSE.
-
-The folded format supports mixed object types, as inferred from differences in relevant grouping items on a per record basis.  Mixed typing works best when object types form a nested hierarchy, i.e. all keys are left-subsets of the full key. Thus the order of grouping values is considered informative, e.g. for sorting.
-}
 \seealso{
-\code{\link{obj_attr.data.frame}} \code{\link{fold_.data.frame}}
+\code{\link{obj_attr.data.frame}},  \code{\link{fold_.data.frame}}
 }

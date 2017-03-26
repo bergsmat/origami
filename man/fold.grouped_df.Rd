@@ -15,7 +15,7 @@
 folded
 }
 \description{
-Folds grouped_df, unclassing and passing groups explcitly.
+Folds grouped_df, unclassing and passing groups explcitly as groups(x), over-ridden by anonymous arguments.
 }
 \seealso{
 \code{\link{fold.data.frame}}
