@@ -74,27 +74,17 @@ as.folded.data.frame <- function(x, sort = TRUE, ...){
   extras <- setdiff(names(x),constitutive)
   stopifnot(all(constitutive %in% names(x)))
   x <- x[,c(constitutive,extras),drop=FALSE]
-  if(anyDuplicated(x)){
-    warning('removing duplicates ')
-    x <- unique(x)
+  y <- distinct_(x, .keep_all = TRUE)
+  if(nrow(y) < nrow(x)){
+    message('removing duplicates')
+    x <- y
   }
-  #x <- group_by_(x, .dots = setdiff(names(x),'VALUE'))
+  y <- distinct_(x, .dots = setdiff(names(x),'VALUE'))
+  if(nrow(y) < nrow(x)){
+    warning('removing unique values where keys are duplicated')
+    x <- y
+  }
   if(sort) x <-  sort.folded(x,...)
-  d <- dplyr::select(x,-VALUE)
-  d <- d[duplicated(d),,drop=FALSE]
-  if(nrow(d)){
-    eg <- d[1,,drop=FALSE]
-    nms <- paste(names(eg),collapse=', ')
-    eg <- do.call(paste,c(as.list(eg),list(collapse=', ')))
-    warning('removing duplicates of ',nms,' e.g. ',eg,' ')
-  }
-  d <- dplyr::select(x,-VALUE)
-  if(ncol(d) > 2) d <- d[,1:(ncol(d) - 1),drop=FALSE] # select all but last
-  d <- d[duplicated(d),,drop=FALSE]
-  if(!nrow(d)){
-    col <- names(d)[ncol(d)]
-    # warning('records not duplicated even without ',col) # fix
-  }
   class(x) <- union('folded',class(x))
   x
 }
@@ -404,7 +394,7 @@ fold <- function(x, ... )UseMethod('fold')
 #' 
 #' Likewise, names of metatdata items appear in META, while the name of the described data item appears in VARIABLE.  Values of metadata items appear in VALUE.  If possible, the metadata VALUE will be an encoding (see package: encode). Metadata items are identified explicitly using a list of formulas, or implicitly by means of column naming conventions.
 #' 
-#' Grouping items that are present in the input persist in the result and serve as keys.  Both data and metadata values may have keys, but neither require them.  Keys are identified explicitly by supplying unnamed, unquoted arguments (non-standard evaluation).  Use \code{\link{fold_.data.frame} (or generic) to supply groups as a character vector. Use fold.grouped_df (or generic) to supply groups as an object attribute.   
+#' Grouping items that are present in the input persist in the result and serve as keys.  Both data and metadata values may have keys, but neither require them.  Keys are identified explicitly by supplying unnamed, unquoted arguments (non-standard evaluation).  Use \code{\link{fold_.data.frame}} (or generic) to supply groups as a character vector. Use fold.grouped_df (or generic) to supply groups as an object attribute.   
 #' 
 #' By default, superflous keys (those that do not help distinguish data items) are removed on a per-data-item basis. Column order is used to resolve ambiguities: checking proceeds right to left, preferentially discarding keys to the right.
 #'
@@ -471,7 +461,6 @@ fold.grouped_df <- function(x,...){
 #' Fold an Object, Standard Evaluation
 #' 
 #' Folds an object using standard evaluation.
-#' 
 #' @param x object
 #' @param ... passed arguments
 #' @export
@@ -480,7 +469,7 @@ fold_ <- function(x, ... )UseMethod('fold_')
 
 #' Fold a grouped_df, Standard Evaluation
 #' 
-#' Folds a grouped data.frame using standard evaluation. Reclassifies as data.frame and passes groups explicitly
+#' Folds a grouped data.frame using standard evaluation. Reclassifies as data.frame and passes groups explicitly.
 #' @param x data.frame
 #' @param ... passed arguments
 #' @param groups a vector of column names serving as key: included in result but not stacked
@@ -793,7 +782,6 @@ simplify <- function(x,...)UseMethod('simplify')
 # }
 
 simplify.folded <- function(x,...){
-  # x %<>% group_by(VARIABLE,META)
   key <- c('VARIABLE','META')
   modifiers <- setdiff(names(x),c('VARIABLE','META','VALUE'))
   for(col in modifiers){
@@ -802,15 +790,13 @@ simplify.folded <- function(x,...){
     x <- mutate(x, .n = length(unique(VALUE)))
     x <- group_by(x, VARIABLE,META)
     x <- mutate(x, .satisfied = all(.n == 1))
-    #x %<>% mutate_(.satisfied = constant(.[['VALUE']],within=.[key]))
     x[[col]][x$.satisfied] <- NA
     key <- c(key,col)
   }
   if(length(modifiers)) x <- select(x, -.key,-.n,-.satisfied)
   if(length(modifiers)) x <-  ungroup(x)
   for(col in modifiers)if(all(is.na(x[[col]])))x[col] <- NULL
-  # x %<>% group_by_(.dots = setdiff(names(x),'VALUE'))
-  x <- unique(x)
+  x <- distinct_(x, .keep_all = TRUE)
   x
 }
 

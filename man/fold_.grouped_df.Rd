@@ -24,7 +24,7 @@
 folded data.frame with columns VARIABLE, META, VALUE and any supplied grouping items.
 }
 \description{
-Folds a grouped data.frame using standard evaluation. Reclassifies as data.frame and passes groups explicitly
+Folds a grouped data.frame using standard evaluation. Reclassifies as data.frame and passes groups explicitly.
 }
 \seealso{
 \code{\link{obj_attr.data.frame}} \code{\link{fold_.data.frame}}
