@@ -4,7 +4,7 @@
 \alias{fold_.grouped_df}
 \title{Fold a grouped_df, Standard Evaluation}
 \usage{
-\method{fold_}{grouped_df}(x, groups = match.fun("groups")(x),
+\method{fold_}{grouped_df}(x, groups = unlist(match.fun("groups")(x)),
   meta = obj_attr(x), simplify = TRUE, sort = TRUE, ...)
 }
 \arguments{

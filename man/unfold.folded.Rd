@@ -9,7 +9,7 @@
 \arguments{
 \item{x}{folded data.frame}
 
-\item{...}{variables to unfold, given as unquoted names}
+\item{...}{variables to unfold, given as unquoted anonymous names}
 }
 \value{
 data.frame
@@ -18,7 +18,7 @@ data.frame
 Unfolds a folded data.frame, or part thereof.
 }
 \details{
-By default, the entire data.frame is unfolded, possibly giving back something originally passed to fold().  If \dots is specified, only selected items are unfolded.  Values stored as encodings are converted to factor.
+By default, the entire data.frame is unfolded, possibly giving back something originally passed to fold().  If \dots is specified, only selected items (given as anonymous unquoted arguments) are unfolded.  Values stored as encodings are converted to factor.
 }
 \seealso{
 fold_.data.frame

@@ -213,15 +213,28 @@ unfold_ <- function(x,...)UseMethod('unfold_')
 #' 
 #' Unfolds a folded data.frame, or part thereof.
 #' 
-#' By default, the entire data.frame is unfolded, possibly giving back something originally passed to fold().  If \dots is specified, only selected items are unfolded.  Values stored as encodings are converted to factor.
+#' By default, the entire data.frame is unfolded, possibly giving back something originally passed to fold().  If \dots is specified, only selected items (given as anonymous unquoted arguments) are unfolded.  Values stored as encodings are converted to factor.
 #' 
 #' @param x folded data.frame
-#' @param ... variables to unfold, given as unquoted names
+#' @param ... variables to unfold, given as unquoted anonymous names
 #' @seealso fold_.data.frame
 #' @return data.frame
 #' @importFrom lazyeval dots_capture f_rhs
 #' @export
-unfold.folded <- function(x, ...)unfold_(x, var = dots_capture(...))
+unfold.folded <- function(x, ...){
+  args <- dots_capture(...)
+  args <- lapply(args, f_rhs)
+  var <- args[names(args) == '']
+  var <- sapply(var, as.character)
+  other <- args[names(args) != '']
+  do.call(
+    unfold_,
+    c(
+      list(x = x, var = var),
+      other
+    )
+  )
+}
   
 #' Unfold a Folded Data.frame, Standard Evaluation
 #' 
@@ -231,7 +244,7 @@ unfold.folded <- function(x, ...)unfold_(x, var = dots_capture(...))
 #' 
 #' @param x folded data.frame
 #' @param ... ignored arguments
-#' @param var variables to unfold: character vector or list of formulas
+#' @param var character: variables to unfold
 #' @return data.frame
 #' @keywords internal
 #' @seealso fold.data.frame
@@ -243,11 +256,6 @@ unfold_.folded <- function(
   ...
 ){
   if(length(var) == 0) var <-  unique(x$VARIABLE[is.na(x$META)])
-  if(is.list(var)){
-    var <- lapply(var, f_rhs)
-    var <- var[names(var) == ''] # only anonymous arguments
-    var <- sapply(var, as.character)
-  }
   groups <- setdiff(names(x),c('VARIABLE','META','VALUE'))
   x <- data.frame(x, stringsAsFactors = FALSE) # much faster with grouped_df removed
   class(x) <- c('folded','data.frame')
@@ -487,7 +495,7 @@ fold_ <- function(x, ... )UseMethod('fold_')
 
 fold_.grouped_df <- function(
   x,
-  groups = match.fun('groups')(x),
+  groups = unlist(match.fun('groups')(x)),
   meta = obj_attr(x),
   simplify = TRUE,
   sort = TRUE,

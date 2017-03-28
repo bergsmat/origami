@@ -9,7 +9,7 @@
 \arguments{
 \item{x}{folded data.frame}
 
-\item{var}{variables to unfold: character vector or list of formulas}
+\item{var}{character: variables to unfold}
 
 \item{...}{ignored arguments}
 }
