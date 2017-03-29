@@ -245,24 +245,30 @@ unfold.folded <- function(x, ...){
 #' @param x folded data.frame
 #' @param ... ignored arguments
 #' @param var character: variables to unfold
-#' @return data.frame
-#' @keywords internal
+#' @param grouped whether to supply groups to the result
+#' @return data.frame, possibly grouped
 #' @seealso fold.data.frame
 #' @export
 #' @importFrom utils read.table 
 unfold_.folded <- function(  
   x,
   var,
+  grouped = TRUE,
   ...
 ){
-  if(length(var) == 0) var <-  unique(x$VARIABLE[is.na(x$META)])
   groups <- setdiff(names(x),c('VARIABLE','META','VALUE'))
-  x <- data.frame(x, stringsAsFactors = FALSE) # much faster with grouped_df removed
+  vars <- unique(x$VARIABLE[is.na(x$META)])
+  if(length(var) == 0) var <- c(groups,vars)
+  # much faster with grouped_df removed
+  #x <- data.frame(x, stringsAsFactors = FALSE) 
+  x <- ungroup(x)
   class(x) <- c('folded','data.frame')
   y <- lapply(var,function(v)distill(x,mission=v,...))
   z <- metaMerge(y)
-  # groups <- intersect(groups,names(z))
-  # z <- dplyr::group_by_(z,.dots=groups)
+  if(grouped){
+    groups <- intersect(groups,names(z))
+    z <- dplyr::group_by_(z,.dots=groups)
+  }
   z
 }
 
@@ -392,6 +398,7 @@ arrange_.folded <- function(.data, ..., .dots){
 #' @seealso \code{\link{fold.data.frame}}
 fold <- function(x, ... )UseMethod('fold')
 
+
 #' Fold a Data Frame
 #' 
 #' Folds a data.frame.  Stacks columns, while isolating metadata and capturing keys.
@@ -457,13 +464,22 @@ fold.data.frame <- function(
 #' @seealso \code{\link{fold.data.frame}}
 fold.grouped_df <- function(x,...){
   args <- dots_capture(...)
-  nms <- args[names(args) == '']
   args <- lapply(args,f_rhs)
-  args <- sapply(args, as.character)
-  groups <- if(length(args)) args else unlist(groups(x))
-  groups <- groups(x)
+  groups <- args[names(args) == '']
+  other  <- args[names(args) != '']
+  groups <- sapply(args, as.character) 
+  if(!length(groups)) groups <- unlist(groups(x))
   x <- ungroup(x)
-  fold.data.frame(x, groups = groups, ...)
+  do.call(
+    fold_.data.frame,
+    c(
+      list(
+        x = x, 
+        groups = groups
+      ),
+      other
+    )
+  )
 }
 
 #' Fold an Object, Standard Evaluation
@@ -602,7 +618,7 @@ encodeable <- function(x,y, tol = 10,...){
   yfactor <- is.factor(y)
   len <- length(unique(x))
   if( (xfactor || yfactor) & mapped ) return(TRUE)
-  if(mapped & len <= tol) return(TRUE)
+  if(mapped & len <= tol & length(unique(y)) > 1) return(TRUE)
   FALSE
 }
 
@@ -671,6 +687,7 @@ obj_attr.data.frame <- function(x,...)obj_attr(names(x),...)
 #' @keywords internal
 #' @return character
 print.folded <- function(x, limit = 8, n = 10, ...){
+  n <- min(n,nrow(x),na.rm=TRUE)
   x[] <- lapply(x,shortOrNot, limit = limit, n = n, ...)
   NextMethod()
 }
@@ -727,6 +744,8 @@ decode.data.frame <- function(
   }
   codes <- codes(encoding)
   decodes <- decodes(encoding)
+  codes[codes == 'NA'] <- NA_character_
+  decodes[decodes == 'NA'] <- NA_character_
   x[[decoded]] <- map(x[[encoded]], from=codes, to = decodes)
   x[[decoded]] <- factor(x[[decoded]],levels=decodes)
   #x[[encoded]] <- factor(x[[encoded]],levels=codes)

@@ -1,4 +1,4 @@
-Package: origami
+Package: fold
 Type: Package
 Title: A Self-Describing Dataset Format and Interface
 Version: 0.1
@@ -20,4 +20,6 @@ Imports:
  encode,
  csv
 Suggests:
+ magrittr,
+ wrangle
 RoxygenNote: 6.0.1

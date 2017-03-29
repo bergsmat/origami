@@ -1,13 +1,8 @@
-library(tidyr)
-library(dplyr)
-library(lazyeval)
 library(magrittr)
-library(encode)
-library(csv)
 library(wrangle)
 
-x <- 'inst/data.csv' %>% as.csv
-x
+data(events)
+x <- events
 
 #' Step 0.  Rename columns to remove semantic (non-syntactic) underscores.
 #' Step 1.  De-interlace the data. 
@@ -52,13 +47,20 @@ x %<>% mutate(
       PRED_GUIDE = 'ng/mL'
 )
 
-head(x)
-x %>% fold %>% data.frame
-nrow(x)
-x %>% fold %>% unfold
-x %>% filter(USUBJID == 'Jill') %>% fold %>% unfold
-x %>% select(C:DV) %>% select(-ID) %>% fold %>% unfold
-x %<>% select(C)
-x
-debug(fold)
+#' Step 4. Fold and unfold your data.
 x %>% fold
+x %>% fold %>% unfold
+x %>% fold %>% unfold %>% fold(USUBJID,TIME) 
+x %>% fold %>% unfold(PRED,TIME,WT)
+
+
+
+
+
+
+
+
+
+
+
+

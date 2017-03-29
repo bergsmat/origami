@@ -4,17 +4,19 @@
 \alias{unfold_.folded}
 \title{Unfold a Folded Data.frame, Standard Evaluation}
 \usage{
-\method{unfold_}{folded}(x, var, ...)
+\method{unfold_}{folded}(x, var, grouped = TRUE, ...)
 }
 \arguments{
 \item{x}{folded data.frame}
 
 \item{var}{character: variables to unfold}
 
+\item{grouped}{whether to supply groups to the result}
+
 \item{...}{ignored arguments}
 }
 \value{
-data.frame
+data.frame, possibly grouped
 }
 \description{
 Unfolds a folded data.frame, or part thereof, using standard evaluation.
@@ -25,4 +27,3 @@ By default, the entire data.frame is unfolded, possibly giving back something or
 \seealso{
 fold.data.frame
 }
-\keyword{internal}
