@@ -7,14 +7,21 @@
 \alias{foldpkg-package}
 \title{fold: A Self-Describing Dataset Format and Interface}
 \description{
-The fold package defines a compact, table-based, tool-neutral data format designed to accommodate embedded metadata.  Not surprisingly, it also implements an interface for this format in R.
+The fold package defines a compact, table-based, tool-neutral data format 
+designed to accommodate embedded metadata.  Not surprisingly, it also implements 
+an interface for this format in R.
 }
 \details{
-The goal is to store metadata along with data. We do this by transforming tabular data into a folded format -- still a table, but with a META column that associates attributes (metadata) with the data items they describe.
+The goal is to store metadata along with data. We do this by transforming 
+tabular data into a folded format -- still a table, but with a META column 
+that associates attributes (metadata) with the data items they describe.
 
-This all works much better when the data is clean: that is, there are a set of grouping columns, the interaction of which makes each record unique. The fold package can guess a lot of things, but you need to specify the groups -- most general first.
+This all works much better when the data is clean: that is, there are a set 
+of grouping columns, the interaction of which makes each record unique. The 
+fold package can guess a lot of things, but you need to specify the groups 
+-- most general first.
 
-Here we supply a quick-start micro-vignette.
+Here we supply a quick-start micro-vignette.  See also \code{\link{fold.data.frame}}
 }
 \examples{
 library(magrittr)
@@ -30,12 +37,12 @@ x <- events
 
 x \%<>\% filter(CMT == 2) \%>\% select(-EVID,-CMT,-AMT)
 
-# Step 2.  Describe the groups (unique key).  Order is important (start with most general ... whateve that means to you).
+# Step 2.  Describe the groups (unique key).  Order is important. (Start with most general.)
 
 x \%<>\% group_by(USUBJID, TIME)
 x \%>\% status
 
-# Step 3.  Supply metadata as values or factors. You can hardcode these or merge from some other source. Here we hardcode.
+# Step 3.  Supply metadata as values or factors. Hardcode or merge from source.
 
 x \%<>\% mutate(
   ID_LABEL = 'subject identifier',

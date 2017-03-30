@@ -12,7 +12,7 @@
 \item{...}{passed arguments}
 }
 \value{
-folded
+folded data.frame
 }
 \description{
 Simplify folded. Per each combination of VARIABLE and META, find the minimum left subset of remaining columns necessary for uniquely distinguishing VALUE, setting other columns to NA. Then drop columns that are completely NA and remove duplicate records.

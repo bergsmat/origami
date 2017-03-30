@@ -3,6 +3,10 @@ globalVariables('LABEL')
 globalVariables('GUIDE')
 globalVariables('META')
 globalVariables('VARIABLE')
+globalVariables('.key')
+globalVariables('.n')
+globalVariables('.satisfied')
+globalVariables('read.table')
 
 .informative <- function (x, ...) x[, sapply(x, function(col) any(!is.na(col))), drop = FALSE]
 
@@ -38,7 +42,7 @@ as.folded <- function(x,...)UseMethod('as.folded')
 #' 
 #' @param x length-one character
 #' @param ... passed arguments
-#' @return folded
+#' @return folded dat.frame
 #' @import csv
 #' @export
 as.folded.character <- function(x,...){
@@ -52,7 +56,7 @@ as.folded.character <- function(x,...){
 #' 
 #' 
 #' @inheritParams as.folded
-#' @return folded
+#' @return folded data.frame
 #' @export
 #' @keywords internal
 as.folded.folded <- function(x,...)x
@@ -62,11 +66,11 @@ as.folded.folded <- function(x,...)x
 #' 
 #' Coerces to folded from data.frame.
 #' 
-#' Expects columns VARIABLE, META, and VALUE. Remaining columns are for classification and may be NA. Coerces VALUE to character. Removes duplicate records with warning. Sorts on non-value columns by default. Assigns class \code{folded}.
+#' Expects columns VARIABLE, META, and VALUE. Remaining columns are for classification and may be NA. Coerces VALUE to character. Removes duplicate records with warning. Sorts on non-value columns by default. Assigns class \code{folded}. Enforces groups attribute.
 #' 
 #' @inheritParams as.folded
 #' @param sort Should the result be sorted?
-#' @return folded
+#' @return folded data.frame
 #' @import dplyr
 #' @export
 as.folded.data.frame <- function(x, sort = TRUE, ...){
@@ -85,9 +89,11 @@ as.folded.data.frame <- function(x, sort = TRUE, ...){
     x <- y
   }
   if(sort) x <-  sort.folded(x,...)
-  class(x) <- union('folded',class(x))
+  class(x) <- c('folded','data.frame')
+  attr(x,'groups') <- extras
   x
 }
+
 
 #' Sort Folded
 #' 
@@ -213,12 +219,12 @@ unfold_ <- function(x,...)UseMethod('unfold_')
 #' 
 #' Unfolds a folded data.frame, or part thereof.
 #' 
-#' By default, the entire data.frame is unfolded, possibly giving back something originally passed to fold().  If \dots is specified, only selected items (given as anonymous unquoted arguments) are unfolded.  Values stored as encodings are converted to factor.
+#' By default, the entire data.frame is unfolded, possibly giving back something originally passed to fold().  If \dots is specified, only selected items (given as anonymous unquoted arguments) are unfolded.  Values stored as encodings are converted to factor. The result has a groups attribute: a character vector of column names in the result whose interaction makes rows unique.
 #' 
 #' @param x folded data.frame
 #' @param ... variables to unfold, given as unquoted anonymous names
 #' @seealso fold_.data.frame
-#' @return data.frame
+#' @return data.frame with a groups attribute (character)
 #' @importFrom lazyeval dots_capture f_rhs
 #' @export
 unfold.folded <- function(x, ...){
@@ -240,35 +246,29 @@ unfold.folded <- function(x, ...){
 #' 
 #' Unfolds a folded data.frame, or part thereof, using standard evaluation.
 #' 
-#' By default, the entire data.frame is unfolded, possibly giving back something originally passed to fold().  If \code{var} is specified, only selected items are unfolded.  Values stored as encodings are converted to factor.
+#' By default, the entire data.frame is unfolded, possibly giving back something originally passed to fold().  If \code{var} is specified, only selected items are unfolded.  Values stored as encodings are converted to factor. The result has a groups attribute: a character vector of column names in the result whose interaction makes rows unique.
 #' 
 #' @param x folded data.frame
 #' @param ... ignored arguments
 #' @param var character: variables to unfold
-#' @param grouped whether to supply groups to the result
-#' @return data.frame, possibly grouped
+#' @return data.frame with a groups attribute (character)
 #' @seealso fold.data.frame
+#' @importFrom utils read.table
 #' @export
-#' @importFrom utils read.table 
 unfold_.folded <- function(  
   x,
   var,
-  grouped = TRUE,
   ...
 ){
   groups <- setdiff(names(x),c('VARIABLE','META','VALUE'))
   vars <- unique(x$VARIABLE[is.na(x$META)])
   if(length(var) == 0) var <- c(groups,vars)
   # much faster with grouped_df removed
-  #x <- data.frame(x, stringsAsFactors = FALSE) 
-  x <- ungroup(x)
-  class(x) <- c('folded','data.frame')
+  x <- data.frame(x, stringsAsFactors = FALSE) 
   y <- lapply(var,function(v)distill(x,mission=v,...))
   z <- metaMerge(y)
-  if(grouped){
-    groups <- intersect(groups,names(z))
-    z <- dplyr::group_by_(z,.dots=groups)
-  }
+  groups <- intersect(groups,names(z))
+  attr(z,'groups') <- groups
   z
 }
 
@@ -420,7 +420,7 @@ fold <- function(x, ... )UseMethod('fold')
 #' The folded format supports mixed object types, as inferred from differences in relevant grouping items on a per record basis.  Mixed typing works best when object types form a nested hierarchy, i.e. all keys are left-subsets of the full key. Thus the order of grouping values is considered informative, e.g. for sorting.
 
 #' @param x data.frame
-#' @param ... unquoted names of grouping columns
+#' @param ... unquoted names of grouping columns. See also \code{\link{fold.grouped_df}}.  Alternatively, pre-specify as a groups attribute (character vector).
 #' @param meta a list of formulas in the form object ~ attribute. Pass something with length 0 to suppress guessing.
 #' @param simplify set to NA any groups values that do not help distinguish values, and remove resulting duplicate records
 #' @param sort whether to sort the result
@@ -496,7 +496,7 @@ fold_ <- function(x, ... )UseMethod('fold_')
 #' Folds a grouped data.frame using standard evaluation. Reclassifies as data.frame and passes groups explicitly.
 #' @param x data.frame
 #' @param ... passed arguments
-#' @param groups a vector of column names serving as key: included in result but not stacked
+#' @param groups a vector of column names whose interaction makes records unique. Included in result but not stacked. See also \code{\link{fold.grouped_df}}.  Alternatively, pre-specify as a groups attribute.
 #' @param meta a list of formulas in the form object ~ attribute. Pass something with length 0 to suppress guessing.
 #' @param simplify set to NA any groups values that do not help distinguish values, and remove resulting duplicate records
 #' @param sort whether to sort the result
@@ -519,6 +519,7 @@ fold_.grouped_df <- function(
 ){
   groups # force the evaluation
   x <- ungroup(x)
+  class(x) <- 'data.frame'
   fold_.data.frame(
     x,
     groups = groups,
@@ -534,7 +535,7 @@ fold_.grouped_df <- function(
 #' Folds a data.frame using standard evaluation. See also \code{\link{fold.data.frame}}.
 #' @param x data.frame
 #' @param ... ignored arguments
-#' @param groups a vector of column names serving as key: included in result but not stacked
+#' @param groups a vector of column names whose interaction makes records unique. Included in result but not stacked. See also \code{\link{fold.grouped_df}}.  Alternatively, pre-specify as a groups attribute.
 #' @param meta a list of formulas in the form object ~ attribute. Pass something with length 0 to suppress guessing.
 #' @param simplify set to NA any groups values that do not help distinguish values, and remove resulting duplicate records
 #' @param sort whether to sort the result
@@ -550,7 +551,7 @@ fold_.grouped_df <- function(
 
 fold_.data.frame <- function(
   x,
-  groups = character(0),
+  groups = c(character(0),attr(x,'groups')),
   meta = obj_attr(x),
   simplify = TRUE,
   sort = TRUE,
@@ -578,7 +579,7 @@ fold_.data.frame <- function(
     m <- getMeta(x=x, table=table, groups=groups, simplify=simplify, ...)
     d <- bind_rows(m,d)
   }
-  d <- ungroup(d)
+  #d <- ungroup(d)
   #class(d) <- c('folded','data.frame')
   #if(sort) d <- sort(d)
   d <- as.folded(d, sort = sort, ...)
@@ -687,19 +688,23 @@ obj_attr.data.frame <- function(x,...)obj_attr(names(x),...)
 #' @keywords internal
 #' @return character
 print.folded <- function(x, limit = 8, n = 10, ...){
+  len <- nrow(x)
   n <- min(n,nrow(x),na.rm=TRUE)
-  x[] <- lapply(x,shortOrNot, limit = limit, n = n, ...)
+  x <- x[seq_len(n),]
+  x[] <- lapply(x,shortOrNot, limit = limit,  ...)
+  cat('showing ', n, ' of ',len,' records\n')
   NextMethod()
 }
 
-shortOrNot <- function(x, limit = 8, n = 10, ...){
+shortOrNot <- function(x, limit = 8, ...){ # n = 10
   if(!is.character(x)) return(x)
-  test <- x[seq_len(n)]
+  test <- x # x[seq_len(n)]
   chars <- nchar(test)
   chars[is.na(chars)] <- 0
   enc <- encoded(test)
   issues <- enc & chars > limit
-  if(any(issues)) x[seq_len(n)] <- short(x[seq_len(n)], n = limit)
+#  if(any(issues)) x[seq_len(n)] <- short(x[seq_len(n)], n = limit)
+  if(any(issues)) x <- short(x, n = limit)
   return(x)
 }
 
@@ -764,12 +769,11 @@ simplify <- function(x,...)UseMethod('simplify')
 #' Simplify Folded
 #' 
 #' Simplify folded. Per each combination of VARIABLE and META, find the minimum left subset of remaining columns necessary for uniquely distinguishing VALUE, setting other columns to NA. Then drop columns that are completely NA and remove duplicate records.
-
-#' 
+#'
 #' @param x folded
 #' @param ... passed arguments
 #' @export
-#' @return folded
+#' @return folded data.frame
 # simplify.folded <- function(x,ignore=character(0),protect=FALSE,...){
 #   classifiers <- setdiff(names(x),c('VARIABLE','META','VALUE'))
 #   classifiers <- setdiff(classifiers,ignore)
@@ -824,6 +828,7 @@ simplify.folded <- function(x,...){
   if(length(modifiers)) x <-  ungroup(x)
   for(col in modifiers)if(all(is.na(x[[col]])))x[col] <- NULL
   x <- distinct_(x, .keep_all = TRUE)
+  class(x) <- c('folded','data.frame')
   x
 }
 

@@ -10,7 +10,7 @@
 \arguments{
 \item{x}{data.frame}
 
-\item{groups}{a vector of column names serving as key: included in result but not stacked}
+\item{groups}{a vector of column names whose interaction makes records unique. Included in result but not stacked. See also \code{\link{fold.grouped_df}}.  Alternatively, pre-specify as a groups attribute.}
 
 \item{meta}{a list of formulas in the form object ~ attribute. Pass something with length 0 to suppress guessing.}
 

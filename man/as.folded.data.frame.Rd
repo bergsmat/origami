@@ -14,11 +14,11 @@
 \item{...}{passed arguments}
 }
 \value{
-folded
+folded data.frame
 }
 \description{
 Coerces to folded from data.frame.
 }
 \details{
-Expects columns VARIABLE, META, and VALUE. Remaining columns are for classification and may be NA. Coerces VALUE to character. Removes duplicate records with warning. Sorts on non-value columns by default. Assigns class \code{folded}.
+Expects columns VARIABLE, META, and VALUE. Remaining columns are for classification and may be NA. Coerces VALUE to character. Removes duplicate records with warning. Sorts on non-value columns by default. Assigns class \code{folded}. Enforces groups attribute.
 }

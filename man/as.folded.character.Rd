@@ -12,7 +12,7 @@
 \item{...}{passed arguments}
 }
 \value{
-folded
+folded dat.frame
 }
 \description{
 Coerces to folded format from character, treating \code{x} as a filepath.

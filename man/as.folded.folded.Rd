@@ -12,7 +12,7 @@
 \item{...}{passed arguments}
 }
 \value{
-folded
+folded data.frame
 }
 \description{
 Coerces to folded format from folded.  A non-operation.
