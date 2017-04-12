@@ -20,3 +20,6 @@ Saves folded format as CSV.
 \details{
 Simply calls as.csv.data.frame.
 }
+\seealso{
+\code{\link{fold.data.frame}} \code{\link{as.folded.character}}
+}

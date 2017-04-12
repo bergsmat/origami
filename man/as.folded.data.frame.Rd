@@ -20,5 +20,8 @@ folded data.frame
 Coerces to folded from data.frame.
 }
 \details{
-Expects columns VARIABLE, META, and VALUE. Remaining columns are for classification and may be NA. Coerces VALUE to character. Removes duplicate records with warning. Sorts on non-value columns by default. Assigns class \code{folded}. Enforces groups attribute.
+Expects columns VARIABLE, META, and VALUE. Remaining columns are for classification and may be NA. Coerces VALUE to character. Removes duplicate records with warning. Sorts on non-VALUE columns by default. Assigns class \code{folded}.
+}
+\seealso{
+\code{\link{fold.data.frame}} \code{\link{as.folded}}
 }

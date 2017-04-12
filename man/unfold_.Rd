@@ -12,6 +12,9 @@ unfold_(x, ...)
 \item{...}{passed arguments}
 }
 \description{
-Unfolds an object, standard evaluation.
+Unfolds an object using standard evaluation.
+}
+\seealso{
+\code{\link{unfold_.folded}} \code{\link{unfold}}
 }
 \keyword{internal}

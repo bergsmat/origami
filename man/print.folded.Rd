@@ -19,4 +19,7 @@ character
 \description{
 Prints folded. Specifically, shortens display of encoded items that are above limit.
 }
+\seealso{
+\code{\link{fold.data.frame}}
+}
 \keyword{internal}

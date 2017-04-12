@@ -14,3 +14,6 @@ simplify(x, ...)
 \description{
 Simplifies something.
 }
+\seealso{
+\code{\link{simplify.folded}}
+}

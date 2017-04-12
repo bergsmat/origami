@@ -19,3 +19,6 @@ folded
 \description{
 Sorts folded.
 }
+\seealso{
+\code{\link{fold.data.frame}}
+}

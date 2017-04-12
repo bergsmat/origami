@@ -27,5 +27,5 @@ folded data.frame with columns VARIABLE, META, VALUE and any supplied grouping i
 Folds a grouped data.frame using standard evaluation. Reclassifies as data.frame and passes groups explicitly.
 }
 \seealso{
-\code{\link{obj_attr.data.frame}} \code{\link{fold_.data.frame}}
+\code{\link{obj_attr.data.frame}} \code{\link{fold_.data.frame}} \code{\link{fold_}} \code{\link{fold.grouped_df}}
 }

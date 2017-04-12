@@ -2,7 +2,7 @@
 % Please edit documentation in R/meta.R
 \name{distill.folded}
 \alias{distill.folded}
-\title{Distill a Variable of Folded}
+\title{Distill Folded}
 \usage{
 \method{distill}{folded}(x, ...)
 }
@@ -12,6 +12,9 @@
 \item{...}{passed arguments}
 }
 \description{
-Distills a variable of folded.
+Distills folded. Indirectly calls the data.frame method.
+}
+\seealso{
+\code{\link{distill}}
 }
 \keyword{internal}

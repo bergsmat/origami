@@ -14,4 +14,7 @@ obj_attr(x, ...)
 \description{
 Infers object-attribute relationships.
 }
+\seealso{
+\code{\link{fold.data.frame}} \code{\link{obj_attr.character}} \code{\link{obj_attr.data.frame}}
+}
 \keyword{internal}

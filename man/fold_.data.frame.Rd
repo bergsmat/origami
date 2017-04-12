@@ -29,5 +29,5 @@ folded data.frame with columns VARIABLE, META, VALUE and any supplied grouping i
 Folds a data.frame using standard evaluation. See also \code{\link{fold.data.frame}}.
 }
 \seealso{
-\code{\link{obj_attr.data.frame}} \code{\link{fold.data.frame}}
+\code{\link{obj_attr.data.frame}} \code{\link{fold.data.frame}} \code{\link{fold_}}
 }

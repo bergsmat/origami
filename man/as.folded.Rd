@@ -14,4 +14,7 @@ as.folded(x, ...)
 \description{
 Coerces to folded format.
 }
+\seealso{
+\code{\link{as.folded.character}} \code{\link{as.folded.folded}} \code{\link{as.folded.data.frame}}
+}
 \keyword{internal}

@@ -21,5 +21,5 @@ Unfolds a folded data.frame, or part thereof.
 By default, the entire data.frame is unfolded, possibly giving back something originally passed to fold().  If \dots is specified, only selected items (given as anonymous unquoted arguments) are unfolded.  Values stored as encodings are converted to factor. The result has a groups attribute: a character vector of column names in the result whose interaction makes rows unique.
 }
 \seealso{
-fold_.data.frame
+\code{\link{fold_.data.frame}}
 }

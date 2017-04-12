@@ -23,5 +23,5 @@ Unfolds a folded data.frame, or part thereof, using standard evaluation.
 By default, the entire data.frame is unfolded, possibly giving back something originally passed to fold().  If \code{var} is specified, only selected items are unfolded.  Values stored as encodings are converted to factor. The result has a groups attribute: a character vector of column names in the result whose interaction makes rows unique.
 }
 \seealso{
-fold.data.frame
+\code{\link{fold.data.frame}}
 }

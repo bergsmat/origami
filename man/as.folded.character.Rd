@@ -2,7 +2,7 @@
 % Please edit documentation in R/meta.R
 \name{as.folded.character}
 \alias{as.folded.character}
-\title{Coerce to Folded Format from Filepath}
+\title{Coerce to Folded from Character}
 \usage{
 \method{as.folded}{character}(x, ...)
 }
@@ -15,5 +15,8 @@
 folded dat.frame
 }
 \description{
-Coerces to folded format from character, treating \code{x} as a filepath.
+Coerces to folded by treating character as a filepath.
+}
+\seealso{
+\code{\link{as.csv.folded}} \code{\link{as.folded}}
 }

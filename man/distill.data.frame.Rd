@@ -2,7 +2,7 @@
 % Please edit documentation in R/meta.R
 \name{distill.data.frame}
 \alias{distill.data.frame}
-\title{Distill a Variable of a Data Frame}
+\title{Distill a Data Frame}
 \usage{
 \method{distill}{data.frame}(x, mission, parent = character(0), ...)
 }
@@ -16,9 +16,9 @@
 \item{...}{passed arguments}
 }
 \description{
-Distills a variable of a data.frame.
+Distills a data.frame with respect to a variable.  Recovers everything known about the variable, recursively mining metadata.
 }
-\details{
-Everything known about variable x, recursively mining metadata.
+\seealso{
+\code{\link{distill}}
 }
 \keyword{internal}

@@ -18,5 +18,5 @@ folded
 Folds grouped_df, unclassing and passing groups explcitly as groups(x), over-ridden by anonymous arguments.
 }
 \seealso{
-\code{\link{fold.data.frame}}
+\code{\link{fold.data.frame}} \code{\link{fold}} \code{\link{fold_.data.frame}} \code{\link{fold_.grouped_df}}
 }

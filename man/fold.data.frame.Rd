@@ -2,7 +2,9 @@
 % Please edit documentation in R/meta.R
 \name{fold.data.frame}
 \alias{fold.data.frame}
-\title{Fold a Data Frame}
+\title{Fold a Data Frame
+ 
+Folds a data.frame.  Stacks columns, while isolating metadata and capturing keys.}
 \usage{
 \method{fold}{data.frame}(x, ..., meta = obj_attr(x), simplify = TRUE,
   sort = TRUE)
@@ -22,16 +24,14 @@
 folded data.frame with columns VARIABLE, META, VALUE and any supplied grouping items.
 }
 \description{
-Folds a data.frame.  Stacks columns, while isolating metadata and capturing keys.
+A Folded data.frame is formalized re-presentation of a conventional data.frame.  Items in the conventional form are of three conceptual types: data, metadata, and keys.  Data items contain the primary values, to be described.  Metadata gives additional details about the data items or values. Keys are grouping items; combinations of grouping values should uniquely identify each conventional record.
 }
 \details{
-A Folded data.frame is formalized re-presentation of a conventional data.frame.  Items in the conventional form are of three conceptual types: data, metadata, and keys.  Data items contain the primary values, to be described.  Metadata gives additional details about the data items or values. Keys are grouping items; combinations of grouping values should uniquely identify each conventional record.
-
 In the result, names of data items appear in VARIABLE, while values of data items are stacked in VALUE. Data items are all columns from the input not otherwise identified as metadata or keys.
 
 Likewise, names of metatdata items appear in META, while the name of the described data item appears in VARIABLE.  Values of metadata items appear in VALUE.  If possible, the metadata VALUE will be an encoding (see package: encode). Metadata items are identified explicitly using a list of formulas, or implicitly by means of column naming conventions.
 
-Grouping items that are present in the input persist in the result and serve as keys.  Both data and metadata values may have keys, but neither require them.  Keys are identified explicitly by supplying unnamed, unquoted arguments (non-standard evaluation).  Use \code{\link{fold_.data.frame}} (or generic) to supply groups as a character vector. Use fold.grouped_df (or generic) to supply groups as an object attribute.
+Grouping items that are present in the input persist in the result and serve as keys.  Both data and metadata values may have keys, but neither require them.  Keys are identified explicitly by supplying unnamed, unquoted arguments (non-standard evaluation).  Use \code{\link{fold_.data.frame}} (or generic) to supply groups as a character vector. Or use \code{dplyr::group_by} to add groups that will be respected when \code{\link{fold.grouped_df}} (or generic) is called. Or supply a \code{groups} attribute to the data.frame, e.g. \code{attr(x,'groups') <- c('USUBJID','TIME')}.
 
 By default, superflous keys (those that do not help distinguish data items) are removed on a per-data-item basis. Column order is used to resolve ambiguities: checking proceeds right to left, preferentially discarding keys to the right.
 
@@ -42,5 +42,11 @@ There are cases where a real grouping item may appear superfluous, e.g. for a on
 The folded format supports mixed object types, as inferred from differences in relevant grouping items on a per record basis.  Mixed typing works best when object types form a nested hierarchy, i.e. all keys are left-subsets of the full key. Thus the order of grouping values is considered informative, e.g. for sorting.
 }
 \seealso{
-\code{\link{obj_attr.data.frame}},  \code{\link{fold_.data.frame}}
+\code{\link{obj_attr.data.frame}}  
+\code{\link{fold_.data.frame}} 
+\code{\link{fold}} 
+\code{\link{print.folded}} 
+\code{\link{simplify.folded}} 
+\code{\link{sort.folded}} 
+\code{\link{unfold.folded}}
 }

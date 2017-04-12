@@ -2,7 +2,7 @@
 % Please edit documentation in R/meta.R
 \name{as.folded.folded}
 \alias{as.folded.folded}
-\title{Coerce to Folded Format from Folded Format}
+\title{Coerce to Folded from Folded}
 \usage{
 \method{as.folded}{folded}(x, ...)
 }
@@ -15,6 +15,9 @@
 folded data.frame
 }
 \description{
-Coerces to folded format from folded.  A non-operation.
+Coerces to folded from folded.  A non-operation.
+}
+\seealso{
+\code{\link{fold.data.frame}} \code{\link{as.folded}}
 }
 \keyword{internal}

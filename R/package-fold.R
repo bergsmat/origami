@@ -13,7 +13,7 @@
 #' fold package can guess a lot of things, but you need to specify the groups 
 #' -- most general first.  
 #' 
-#' Here we supply a quick-start micro-vignette.  See also \code{\link{fold.data.frame}}
+#' Here we supply a quick-start micro-vignette.  See also \code{\link{fold.data.frame}}.
 #' 
 #' @examples 
 #' library(magrittr)

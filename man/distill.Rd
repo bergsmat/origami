@@ -2,7 +2,7 @@
 % Please edit documentation in R/meta.R
 \name{distill}
 \alias{distill}
-\title{Distill a Component of an Object}
+\title{Distill Something}
 \usage{
 distill(x, ...)
 }
@@ -12,6 +12,9 @@ distill(x, ...)
 \item{...}{passed arguments}
 }
 \description{
-Distills a component of an object.
+Distills something.
+}
+\seealso{
+\code{\link{fold.data.frame}} \code{\link{distill.folded}} \code{\link{distill.data.frame}}
 }
 \keyword{internal}

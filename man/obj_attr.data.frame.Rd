@@ -18,6 +18,6 @@ a list of formulas in the form object ~ attribute
 Infers object ~ attribute relationships from data.frame.  Processes the names of a data.frame.
 }
 \seealso{
-\code{\link{obj_attr.character}}
+\code{\link{obj_attr}} \code{\link{obj_attr.character}}
 }
 \keyword{internal}

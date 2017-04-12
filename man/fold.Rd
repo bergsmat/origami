@@ -15,6 +15,6 @@ fold(x, ...)
 Folds an object. A method is supplied for \code{data.frame}. The actual work is done by \code{\link{fold_.data.frame}}.
 }
 \seealso{
-\code{\link{fold.data.frame}}
+\code{\link{fold.data.frame}} \code{\link{fold.grouped_df}} \code{\link{fold_}}
 }
 \keyword{internal}
