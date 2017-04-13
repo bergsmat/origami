@@ -20,6 +20,37 @@ Unfolds a folded data.frame, or part thereof.
 \details{
 By default, the entire data.frame is unfolded, possibly giving back something originally passed to fold().  If \dots is specified, only selected items (given as anonymous unquoted arguments) are unfolded.  Values stored as encodings are converted to factor. The result has a groups attribute: a character vector of column names in the result whose interaction makes rows unique.
 }
+\examples{
+library(magrittr)
+library(dplyr)
+data(eventsf)
+eventsf \%>\% unfold
+eventsf \%>\% unfold(DV,PRED)
+x <- events \%>\% 
+  filter(CMT == 2) \%>\% 
+  select(ID, TIME, TAD, DV, BLQ, LLOQ, SEX) 
+x
+attr(x,'groups') <- c('ID','TIME')
+
+# less than 10 values of DV, so BLQ looks like an encoding
+y <- x  \%>\% fold(meta=list(DV~BLQ,BLQ~LLOQ))
+y \%>\% data.frame
+
+# reducing the tolerance forces BLQ to match by groups (ID, TIME) instead of DV value
+z <- x  \%>\% fold(meta=list(DV~BLQ,BLQ~LLOQ),tol=3)
+z
+
+# recursive unfold, since LLOQ is an attribute of BLQ, which is an attribute of DV
+unfold(y)
+unfold(z)
+y \%>\% unfold(DV)
+y \%>\% unfold(BLQ)
+y \%>\% unfold(LLOQ)
+y \%>\% unfold(SEX)
+y \%>\% unfold(TAD)
+y \%>\% unfold(DV,SEX)
+y \%>\% unfold(TAD,SEX)
+}
 \seealso{
-\code{\link{fold_.data.frame}}
+\code{\link{fold_.data.frame}} \code{\link{unfold}} \code{\link{unfold_}}
 }

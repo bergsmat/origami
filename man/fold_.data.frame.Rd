@@ -28,6 +28,17 @@ folded data.frame with columns VARIABLE, META, VALUE and any supplied grouping i
 \description{
 Folds a data.frame using standard evaluation. See also \code{\link{fold.data.frame}}.
 }
+\examples{
+library(magrittr)
+library(dplyr)
+data(events)
+x <- events
+x \%<>\% filter(CMT == 2) \%>\% select(-EVID,-CMT,-AMT)
+x \%>\% fold_(groups = c('USUBJID','TIME'))
+x \%>\% fold_(groups = c('USUBJID','TIME'), meta = list(DV ~ BLQ, DV ~ LLOQ))
+}
 \seealso{
-\code{\link{obj_attr.data.frame}} \code{\link{fold.data.frame}} \code{\link{fold_}}
+\code{\link{obj_attr.data.frame}} 
+\code{\link{fold.data.frame}} 
+\code{\link{fold_}}
 }

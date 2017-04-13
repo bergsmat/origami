@@ -15,10 +15,13 @@
 invisible folded (x)
 }
 \description{
-Saves folded format as CSV.
+Saves folded format as CSV.  Simply calls as.csv.data.frame.
 }
-\details{
-Simply calls as.csv.data.frame.
+\examples{
+library(magrittr)
+library(csv)
+data(eventsf)
+eventsf \%>\% as.csv(tempfile())
 }
 \seealso{
 \code{\link{fold.data.frame}} \code{\link{as.folded.character}}

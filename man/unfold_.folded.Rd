@@ -9,7 +9,7 @@
 \arguments{
 \item{x}{folded data.frame}
 
-\item{var}{character: variables to unfold}
+\item{var}{character: variables to unfold (any elements of var that are also grouping variables will be ignored)}
 
 \item{...}{ignored arguments}
 }
@@ -22,6 +22,11 @@ Unfolds a folded data.frame, or part thereof, using standard evaluation.
 \details{
 By default, the entire data.frame is unfolded, possibly giving back something originally passed to fold().  If \code{var} is specified, only selected items are unfolded.  Values stored as encodings are converted to factor. The result has a groups attribute: a character vector of column names in the result whose interaction makes rows unique.
 }
+\examples{
+library(magrittr)
+data(eventsf)
+eventsf \%>\% unfold_(var = c('DV','PRED'))
+}
 \seealso{
-\code{\link{fold.data.frame}}
+\code{\link{fold.data.frame}} \code{\link{unfold}} \code{\link{unfold_}}
 }

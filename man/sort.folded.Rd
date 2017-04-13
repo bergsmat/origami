@@ -17,7 +17,12 @@
 folded
 }
 \description{
-Sorts folded.
+Sorts folded, using all non-VALUE columns, starting from the left.  If decreasing is TRUE, the resulting row order is reversed.
+}
+\examples{
+library(magrittr)
+data(eventsf)
+eventsf \%>\% sort
 }
 \seealso{
 \code{\link{fold.data.frame}}

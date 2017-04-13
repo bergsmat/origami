@@ -2,15 +2,15 @@
 % Please edit documentation in R/meta.R
 \name{fold_.grouped_df}
 \alias{fold_.grouped_df}
-\title{Fold a grouped_df, Standard Evaluation}
+\title{Fold a Grouped_df, Standard Evaluation}
 \usage{
 \method{fold_}{grouped_df}(x, groups = unlist(match.fun("groups")(x)),
-  meta = obj_attr(x), simplify = TRUE, sort = TRUE, ...)
+  meta = obj_attr(x), simplify = TRUE, sort = TRUE, tol = 10, ...)
 }
 \arguments{
 \item{x}{data.frame}
 
-\item{groups}{a vector of column names whose interaction makes records unique. Included in result but not stacked. See also \code{\link{fold.grouped_df}}.  Alternatively, pre-specify as a groups attribute.}
+\item{groups}{a vector of column names whose interaction makes records unique. Included in result but not stacked. See also \code{\link{fold.grouped_df}}.}
 
 \item{meta}{a list of formulas in the form object ~ attribute. Pass something with length 0 to suppress guessing.}
 
@@ -18,13 +18,15 @@
 
 \item{sort}{whether to sort the result}
 
+\item{tol}{maximum number of categories for guessing whether to encode metadata; encoding will always be attempted if metadata (attr) or its referent (obj) is a factor}
+
 \item{...}{passed arguments}
 }
 \value{
 folded data.frame with columns VARIABLE, META, VALUE and any supplied grouping items.
 }
 \description{
-Folds a grouped data.frame using standard evaluation. Reclassifies as data.frame and passes groups explicitly.
+Folds a grouped_df using standard evaluation. Reclassifies as data.frame and passes groups explicitly.
 }
 \seealso{
 \code{\link{obj_attr.data.frame}} \code{\link{fold_.data.frame}} \code{\link{fold_}} \code{\link{fold.grouped_df}}

@@ -33,7 +33,7 @@ x <- events
 
 # Step 0.  Rename columns to remove semantic (non-syntactic) underscores.
 
-# Step 1.  De-interlace the data.  Limit to a subset so that each column means only one thing.
+# Step 1.  De-interlace the data.  Limit to a subset so that each column means only one thing. 
 
 x \%<>\% filter(CMT == 2) \%>\% select(-EVID,-CMT,-AMT)
 
@@ -83,4 +83,7 @@ x \%>\% fold
 x \%>\% fold \%>\% unfold
 x \%>\% fold \%>\% unfold \%>\% fold
 x \%>\% fold \%>\% unfold(PRED,TIME,WT)
+
+data(eventsf)
+identical(x \%>\% fold, eventsf)
 }

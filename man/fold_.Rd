@@ -15,6 +15,8 @@ fold_(x, ...)
 Folds an object using standard evaluation.
 }
 \seealso{
-\code{\link{fold}} \code{\link{fold_.data.frame}} \code{\link{fold_.grouped_df}}
+\code{\link{fold}} 
+\code{\link{fold_.data.frame}} 
+\code{\link{fold_.grouped_df}}
 }
 \keyword{internal}

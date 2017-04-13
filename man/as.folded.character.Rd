@@ -17,6 +17,14 @@ folded dat.frame
 \description{
 Coerces to folded by treating character as a filepath.
 }
+\examples{
+library(magrittr)
+library(csv)
+data(eventsf)
+file <- tempfile()
+eventsf \%>\% as.csv(file)
+as.folded(file)
+}
 \seealso{
 \code{\link{as.csv.folded}} \code{\link{as.folded}}
 }

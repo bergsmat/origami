@@ -10,8 +10,8 @@
 #' @examples 
 #' library(magrittr)
 #' library(csv)
-#' data(events)
-#' events %>% fold(USUBJID,TIME) %>% as.csv(tempfile())
+#' data(eventsf)
+#' eventsf %>% as.csv(tempfile())
 as.csv.folded <- function(x,...){
   class(x) <- 'data.frame'
   csv::as.csv(x,...)
@@ -41,9 +41,9 @@ as.folded <- function(x,...)UseMethod('as.folded')
 #' @examples 
 #' library(magrittr)
 #' library(csv)
-#' data(events)
+#' data(eventsf)
 #' file <- tempfile()
-#' events %>% fold(USUBJID,TIME) %>% as.csv(file)
+#' eventsf %>% as.csv(file)
 #' as.folded(file)
 as.folded.character <- function(x,...){
   y <- csv::as.csv(x,...)
@@ -94,7 +94,7 @@ as.folded.data.frame <- function(x, sort = TRUE, ...){
 
 #' Sort Folded
 #' 
-#' Sorts folded.
+#' Sorts folded, using all non-VALUE columns, starting from the left.  If decreasing is TRUE, the resulting row order is reversed.
 #' @param x folded
 #' @param decreasing logical
 #' @param ... ignored arguments
@@ -104,8 +104,8 @@ as.folded.data.frame <- function(x, sort = TRUE, ...){
 #' @seealso \code{\link{fold.data.frame}}
 #' @examples 
 #' library(magrittr)
-#' data(events)
-#' events %>% fold(USUBJID,TIME) %>% sort
+#' data(eventsf)
+#' eventsf %>% sort
 sort.folded <- function(x, decreasing = FALSE,...){
   x <-  dplyr::arrange_(x,.dots = setdiff(names(x),'VALUE'))
   if(decreasing) x <- x[rev(rownames(x)),]
@@ -177,17 +177,20 @@ distill.data.frame <- function(
       canonical <- c(lineage,m)
       canonical <- paste(canonical,collapse = '_')
       names(me)[names(me) == m] <- canonical
-      mo <- distill.folded(x,mission = m,parent = lineage,...)
-      me <- weld(me, mo)
+      # mo <- distill.folded(x,mission = m,parent = lineage,...)
+      # me <- weld(me, mo)
       enc <- all(encoded(me[[canonical]])) & length(me[[canonical]]) == 1
       if(!nrow(res))res <- me
       if(nrow(res) & !enc) res <- weld(res,me)
-      if(nrow(res) &  enc) res <- decode(res,
+      if(nrow(res) &  enc) res <- decode(
+        res,
         encoded = mission,
         encoding = me[[canonical]][[1]],
         decoded = canonical,
         ...
       )
+      mo <- distill.folded(x,mission = m,parent = lineage,...)
+      res <- weld(res, mo)
     }
   }
   res
@@ -229,14 +232,39 @@ unfold_ <- function(x,...)UseMethod('unfold_')
 #' @seealso \code{\link{fold_.data.frame}} \code{\link{unfold}} \code{\link{unfold_}}
 #' @examples 
 #' library(magrittr)
-#' data(events)
-#' events %>% fold(USUBJID,TIME) %>% unfold
-#' events %>% fold(USUBJID,TIME) %>% unfold(DV,PRED)
+#' library(dplyr)
+#' data(eventsf)
+#' eventsf %>% unfold
+#' eventsf %>% unfold(DV,PRED)
+#' x <- events %>% 
+#'   filter(CMT == 2) %>% 
+#'   select(ID, TIME, TAD, DV, BLQ, LLOQ, SEX) 
+#' x
+#' attr(x,'groups') <- c('ID','TIME')
+#' 
+#' # less than 10 values of DV, so BLQ looks like an encoding
+#' y <- x  %>% fold(meta=list(DV~BLQ,BLQ~LLOQ))
+#' y %>% data.frame
+#' 
+#' # reducing the tolerance forces BLQ to match by groups (ID, TIME) instead of DV value
+#' z <- x  %>% fold(meta=list(DV~BLQ,BLQ~LLOQ),tol=3)
+#' z
+#' 
+#' # recursive unfold, since LLOQ is an attribute of BLQ, which is an attribute of DV
+#' unfold(y)
+#' unfold(z)
+#' y %>% unfold(DV)
+#' y %>% unfold(BLQ)
+#' y %>% unfold(LLOQ)
+#' y %>% unfold(SEX)
+#' y %>% unfold(TAD)
+#' y %>% unfold(DV,SEX)
+#' y %>% unfold(TAD,SEX)
 unfold.folded <- function(x, ...){
   args <- dots_capture(...)
   args <- lapply(args, f_rhs)
   var <- args[names(args) == '']
-  var <- sapply(var, as.character)
+  var <- sapply(var, as.character) # should be vector, but list() gives list()
   other <- args[names(args) != '']
   do.call(
     unfold_,
@@ -254,21 +282,24 @@ unfold.folded <- function(x, ...){
 #' By default, the entire data.frame is unfolded, possibly giving back something originally passed to fold().  If \code{var} is specified, only selected items are unfolded.  Values stored as encodings are converted to factor. The result has a groups attribute: a character vector of column names in the result whose interaction makes rows unique.
 #' @param x folded data.frame
 #' @param ... ignored arguments
-#' @param var character: variables to unfold
+#' @param var character: variables to unfold (any elements of var that are also grouping variables will be ignored)
 #' @return data.frame with a groups attribute (character)
 #' @importFrom utils read.table
 #' @export
 #' @seealso \code{\link{fold.data.frame}} \code{\link{unfold}} \code{\link{unfold_}}
 #' @examples 
 #' library(magrittr)
-#' data(events)
-#' events %>% fold(USUBJID,TIME) %>% unfold_(var = c('DV','PRED'))
+#' data(eventsf)
+#' eventsf %>% unfold_(var = c('DV','PRED'))
 unfold_.folded <- function( x, var, ...){
   groups <- setdiff(names(x),c('VARIABLE','META','VALUE'))
   vars <- unique(x$VARIABLE[is.na(x$META)])
-  if(length(var) == 0) var <- c(groups,vars)
+  #if(length(var) == 0) var <- c(groups,vars)
+  if(length(var) == 0) var <- vars
+  var <- setdiff(var,groups) # groups return zero-row data.frames which do not merge well
+  if(length(var) == 0) stop('no non-group variables selected')
   # much faster with grouped_df removed
-  x <- data.frame(x, stringsAsFactors = FALSE) 
+  x <- data.frame(x, stringsAsFactors = FALSE)
   y <- lapply(var,function(v)distill(x,mission = v,...))
   z <- metaMerge(y)
   groups <- intersect(groups,names(z))
@@ -413,10 +444,12 @@ arrange_.folded <- function(.data, ..., .dots){
 fold <- function(x, ... )UseMethod('fold')
 
 #' Fold a Data Frame
-#'  
-#' Folds a data.frame.  Stacks columns, while isolating metadata and capturing keys.
 #' 
-#' A Folded data.frame is formalized re-presentation of a conventional data.frame.  Items in the conventional form are of three conceptual types: data, metadata, and keys.  Data items contain the primary values, to be described.  Metadata gives additional details about the data items or values. Keys are grouping items; combinations of grouping values should uniquely identify each conventional record.
+#' Folds a data.frame. Stacks columns, while isolating metadata and capturing keys. 
+#' 
+#' See \code{package?fold} for micro-vignette.
+#' 
+#' A folded data.frame is formalized re-presentation of a conventional data.frame.  Items in the conventional form are of three conceptual types: data, metadata, and keys.  Data items contain the primary values, to be described.  Metadata gives additional details about the data items or values. Keys are grouping items; combinations of grouping values should uniquely identify each conventional record.
 #' 
 #' In the result, names of data items appear in VARIABLE, while values of data items are stacked in VALUE. Data items are all columns from the input not otherwise identified as metadata or keys.
 #' 
@@ -450,9 +483,25 @@ fold <- function(x, ... )UseMethod('fold')
 #' @export
 #' @examples 
 #' library(magrittr)
+#' library(dplyr)
 #' data(events)
-#' events %>% fold(USUBJID,TIME)
-#' events %>% fold(USUBJID,TIME, meta = list(DV ~ BLQ, DV ~ LLOQ))
+#' x <- events
+#' x %<>% filter(CMT == 2) %>% select(-EVID,-CMT,-AMT)
+#' x %>% fold(USUBJID,TIME)
+#' x %>% fold(USUBJID,TIME, meta = list(DV ~ BLQ, DV ~ LLOQ))
+#' x <- events %>% 
+#'   filter(CMT == 2) %>% 
+#'   select(ID, TIME, TAD, DV, BLQ, LLOQ, SEX) 
+#' x
+#' attr(x,'groups') <- c('ID','TIME')
+#' 
+#' # less than 10 values of DV, so BLQ looks like an encoding
+#' y <- x  %>% fold(meta=list(DV~BLQ,BLQ~LLOQ))
+#' y %>% data.frame
+#' 
+#' # reducing the tolerance forces BLQ to match by groups (ID, TIME) instead of DV value
+#' z <- x  %>% fold(meta=list(DV~BLQ,BLQ~LLOQ),tol=3)
+#' z
 fold.data.frame <- function(
   x,
   ...,
@@ -524,9 +573,9 @@ fold.grouped_df <- function(x,...){
 #' \code{\link{fold_.grouped_df}}
 fold_ <- function(x, ... )UseMethod('fold_')
 
-#' Fold a grouped_df, Standard Evaluation
+#' Fold a Grouped_df, Standard Evaluation
 #' 
-#' Folds a grouped data.frame using standard evaluation. Reclassifies as data.frame and passes groups explicitly.
+#' Folds a grouped_df using standard evaluation. Reclassifies as data.frame and passes groups explicitly.
 #' @param x data.frame
 #' @param ... passed arguments
 #' @param groups a vector of column names whose interaction makes records unique. Included in result but not stacked. See also \code{\link{fold.grouped_df}}.
@@ -577,6 +626,8 @@ fold_.grouped_df <- function(
 #' @param tol maximum number of categories for guessing whether to encode metadata; encoding will always be attempted if metadata (attr) or its referent (obj) is a factor
 #' @return folded data.frame with columns VARIABLE, META, VALUE and any supplied grouping items.
 #' @import dplyr
+#' @importFrom lazyeval f_lhs
+#' @importFrom lazyeval f_rhs
 #' @importFrom tidyr spread
 #' @importFrom tidyr spread_
 #' @importFrom tidyr gather
@@ -588,9 +639,12 @@ fold_.grouped_df <- function(
 #' \code{\link{fold_}}
 #' @examples 
 #' library(magrittr)
+#' library(dplyr)
 #' data(events)
-#' events %>% fold_(groups = c('USUBJID','TIME'))
-#' events %>% fold_(groups = c('USUBJID','TIME'), meta = list(DV ~ BLQ, DV ~ LLOQ))
+#' x <- events
+#' x %<>% filter(CMT == 2) %>% select(-EVID,-CMT,-AMT)
+#' x %>% fold_(groups = c('USUBJID','TIME'))
+#' x %>% fold_(groups = c('USUBJID','TIME'), meta = list(DV ~ BLQ, DV ~ LLOQ))
 fold_.data.frame <- function(
   x,
   groups = c(character(0),attr(x,'groups')),
@@ -604,14 +658,17 @@ fold_.data.frame <- function(
     'Nothing to group by.  Do you need to supply groups?'
   )
   # meta
+  if(length(meta))
+    if(is.null(names(meta)))
+      names(meta) <- as.character(sapply(meta, f_rhs))
   table <- data.frame(
     stringsAsFactors = FALSE,
-    VARIABLE = sapply(meta,function(f)as.character(as.list(f)[[2]])),
-    META     = sapply(meta,function(f)as.character(as.list(f)[[3]])),
-    COL      = names(meta)
+    VARIABLE = as.character(sapply(meta, f_lhs)),
+    META     = as.character(sapply(meta, f_rhs)),
+    COL = names(meta)
   )
   # data
-  d <- x[,setdiff(names(x),table$COL),drop = F]
+  d <- x[,setdiff(names(x),table$COL),drop = FALSE]
   d <- tidyr::gather_(d,'VARIABLE','VALUE',setdiff(names(d),groups))
   d <- mutate(d,META = NA_character_)
   d <- mutate(d,VALUE = as.character(VALUE))
@@ -716,8 +773,11 @@ simplify <- function(x,...)UseMethod('simplify')
 #' @seealso \code{\link{simplify}}
 #' @examples 
 #' library(magrittr)
+#' library(dplyr)
 #' data(events)
-#' events %>% fold(USUBJID,TIME, meta = list(DV ~ BLQ, DV ~ LLOQ), simplify = F) %>% simplify
+#' x <- events
+#' x %<>% filter(CMT == 2) %>% select(-EVID,-CMT,-AMT)
+#' x %>% fold(USUBJID,TIME, meta = list(DV ~ BLQ, DV ~ LLOQ), simplify = FALSE) %>% simplify
 simplify.folded <- function(x,...){
   key <- c('VARIABLE','META')
   modifiers <- setdiff(names(x),c('VARIABLE','META','VALUE'))
@@ -824,8 +884,8 @@ encodeable <- function(x,y, tol = 10,...){
 }
 
 encoding <- function(x,y, ...){
-  decodes <- if(is.factor(y)) levels(y) else unique(as.character(y))
-  codes <- x[match(decodes,y)]
+  codes <- if(is.factor(x)) levels(x) else unique(as.character(x))
+  decodes <- y[match(codes,x)] # one y for each x (by definition), so first suffices
   encoding <- encode(codes,decodes)
   encoding
 }
@@ -895,7 +955,7 @@ decode.data.frame <- function(
   codes[codes == 'NA'] <- NA_character_
   decodes[decodes == 'NA'] <- NA_character_
   x[[decoded]] <- map(x[[encoded]], from = codes, to = decodes)
-  x[[decoded]] <- factor(x[[decoded]],levels = decodes)
+  x[[decoded]] <- factor(x[[decoded]],levels = unique(decodes))
   #x[[encoded]] <- factor(x[[encoded]],levels = codes)
   x
 }
