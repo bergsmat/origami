@@ -960,6 +960,43 @@ decode.data.frame <- function(
   x
 }
 
+#' Coerce to Folded from Spec
+#' Coerces to folded from spec.  Harvests column names, labels and units.  Stacks these in conventional folded format.
+#' 
+#' @param x spec
+#' @param ... passed arguments
+#' @return folded
+#' @export
+as.folded.spec <- function(x,...){
+  y <- select(x, VARIABLE = column, LABEL = label, GUIDE = guide)
+  y <- tidyr::gather(y, META, VALUE, LABEL, GUIDE)
+  class(y) <- 'data.frame'
+  y <- as.folded(y)
+  y
+}
+
+#' Coerce to Folded from Definitions
+#' Coerces to folded from definitions  Harvests item, label, and unit for tabled items.  Stacks these in conventional folded format.
+#' 
+#' @param x definitions
+#' @param parameters whether to included parameter metadata
+#' @param ... passed arguments
+#' @return folded
+#' @export
+as.folded.definitions <- function(x, parameters = FALSE, ...){
+  y <- select(x,VARIABLE = item, LABEL = label, GUIDE = unit)
+  if(!parameters) y <- filter(y, !grepl('theta_|omega_|sigma_',VARIABLE))
+  y <- tidyr::gather(y, META, VALUE, LABEL, GUIDE)
+  class(y) <- 'data.frame'
+  y <- as.folded(y)
+  y
+}
+globalVariables('item')
+globalVariables('label')
+globalVariables('unit')
+globalVariables('column')
+globalVariables('label')
+globalVariables('guide')
 globalVariables('VALUE')
 globalVariables('LABEL')
 globalVariables('GUIDE')
