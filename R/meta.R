@@ -546,7 +546,7 @@ fold.grouped_df <- function(x,...){
   groups <- args[names(args) == '']
   other  <- args[names(args) != '']
   groups <- sapply(args, as.character) 
-  if(!length(groups)) groups <- unlist(groups(x))
+  if(!length(groups)) groups <- sapply(groups(x), as.character)
   x <- ungroup(x)
   do.call(
     fold_.data.frame,
@@ -645,6 +645,12 @@ fold_.grouped_df <- function(
 #' x %<>% filter(CMT == 2) %>% select(-EVID,-CMT,-AMT)
 #' x %>% fold_(groups = c('USUBJID','TIME'))
 #' x %>% fold_(groups = c('USUBJID','TIME'), meta = list(DV ~ BLQ, DV ~ LLOQ))
+#' \dontshow{
+#' attr(x,'groups') <- c('USUBJID','TIME')
+#' y <- x %>% select(C, ID, TIME:PRED,USUBJID)
+#' identical(fold(x),fold(y))
+#' 
+#' }
 fold_.data.frame <- function(
   x,
   groups = c(character(0),attr(x,'groups')),
@@ -654,9 +660,13 @@ fold_.data.frame <- function(
   tol = 10,
   ...
 ){
-  if(length(groups) == 0 & nrow(x) > 1)warning(
-    'Nothing to group by.  Do you need to supply groups?'
-  )
+  if(length(groups) == 0 & nrow(x) > 1){
+    warning('Nothing to group by.  Do you need to supply groups?')
+  }else{
+    # we have groups, and order is important.
+    # make sure the groups appear in order
+    x <- x[, c(groups, setdiff(names(x),groups)),drop=FALSE]
+  }
   # meta
   if(length(meta))
     if(is.null(names(meta)))

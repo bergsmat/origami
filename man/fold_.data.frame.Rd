@@ -36,6 +36,12 @@ x <- events
 x \%<>\% filter(CMT == 2) \%>\% select(-EVID,-CMT,-AMT)
 x \%>\% fold_(groups = c('USUBJID','TIME'))
 x \%>\% fold_(groups = c('USUBJID','TIME'), meta = list(DV ~ BLQ, DV ~ LLOQ))
+\dontshow{
+attr(x,'groups') <- c('USUBJID','TIME')
+y <- x \%>\% select(C, ID, TIME:PRED,USUBJID)
+identical(fold(x),fold(y))
+
+}
 }
 \seealso{
 \code{\link{obj_attr.data.frame}} 
