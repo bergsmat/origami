@@ -307,16 +307,18 @@ unfold_.folded <- function( x, var, ...){
   z
 }
 
+#' @export
+dplyr::filter
+
 #' Filter Folded
 #' 
 #' Filters folded.
 #' @param .data passed to next method
 #' @param ... passed to next method
-#' @param .dots passed to next method
 #' @return folded
 #' @keywords internal                       
 #' @export      
-filter_.folded <- function(.data, ..., .dots){
+filter.folded <- function(.data, ...){
   x <- NextMethod()
   class(x) <- union('folded',class(x))
   x
