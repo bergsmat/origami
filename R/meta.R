@@ -204,19 +204,8 @@ distill.data.frame <- function(
 #' @param ... passed arguments
 #' @export
 #' @keywords internal
-#' @seealso \code{\link{unfold.folded}} \code{\link{unfold_}}
+# @seealso \code{\link{unfold.folded}} \code{\link{unfold_}}
 unfold <- function(x,...)UseMethod('unfold')
-
-#' Unfold an Object, Standard Evaluation
-#' 
-#' Unfolds an object using standard evaluation.
-#' 
-#' @param x object
-#' @param ... passed arguments
-#' @export
-#' @keywords internal
-#' @seealso \code{\link{unfold_.folded}} \code{\link{unfold}}
-unfold_ <- function(x,...)UseMethod('unfold_')
 
 #' Unfold a Folded Data.frame
 #' 
@@ -227,9 +216,9 @@ unfold_ <- function(x,...)UseMethod('unfold_')
 #' @param x folded data.frame
 #' @param ... variables to unfold, given as unquoted anonymous names
 #' @return data.frame with a groups attribute (character)
-#' @importFrom lazyeval dots_capture f_rhs
 #' @export
-#' @seealso \code{\link{fold_.data.frame}} \code{\link{unfold}} \code{\link{unfold_}}
+#' @seealso \code{\link{fold_.data.frame}} \code{\link{unfold}} 
+# @seealso \code{\link{unfold_}}
 #' @examples 
 #' library(magrittr)
 #' library(dplyr)
@@ -261,46 +250,31 @@ unfold_ <- function(x,...)UseMethod('unfold_')
 #' y %>% unfold(DV,SEX)
 #' y %>% unfold(TAD,SEX)
 unfold.folded <- function(x, ...){
-  args <- dots_capture(...)
+  args <- quos(...)
   args <- lapply(args, f_rhs)
   var <- args[names(args) == '']
   var <- sapply(var, as.character) # should be vector, but list() gives list()
   other <- args[names(args) != '']
-  do.call(
-    unfold_,
-    c(
-      list(x = x, var = var),
-      other
-    )
-  )
-}
-  
-#' Unfold a Folded Data.frame, Standard Evaluation
-#' 
-#' Unfolds a folded data.frame, or part thereof, using standard evaluation.
-#' 
-#' By default, the entire data.frame is unfolded, possibly giving back something originally passed to fold().  If \code{var} is specified, only selected items are unfolded.  Values stored as encodings are converted to factor. The result has a groups attribute: a character vector of column names in the result whose interaction makes rows unique.
-#' @param x folded data.frame
-#' @param ... ignored arguments
-#' @param var character: variables to unfold (any elements of var that are also grouping variables will be ignored)
-#' @return data.frame with a groups attribute (character)
-#' @importFrom utils read.table
-#' @export
-#' @seealso \code{\link{fold.data.frame}} \code{\link{unfold}} \code{\link{unfold_}}
-#' @examples 
-#' library(magrittr)
-#' data(eventsf)
-#' eventsf %>% unfold_(var = c('DV','PRED'))
-unfold_.folded <- function( x, var, ...){
   groups <- setdiff(names(x),c('VARIABLE','META','VALUE'))
   vars <- unique(x$VARIABLE[is.na(x$META)])
-  #if(length(var) == 0) var <- c(groups,vars)
   if(length(var) == 0) var <- vars
   var <- setdiff(var,groups) # groups return zero-row data.frames which do not merge well
   if(length(var) == 0) stop('no non-group variables selected')
   # much faster with grouped_df removed
   x <- data.frame(x, stringsAsFactors = FALSE)
-  y <- lapply(var,function(v)distill(x,mission = v,...))
+  y <- lapply(
+    var,
+    function(v)do.call(
+      distill,
+      c(
+        list(
+        x = x,
+        mission = v
+      ),
+      other
+      )
+    )
+  )
   z <- metaMerge(y)
   groups <- intersect(groups,names(z))
   attr(z,'groups') <- groups
@@ -329,11 +303,11 @@ filter.folded <- function(.data, ...){
 #' Groups folded.
 #' @param .data passed to next method
 #' @param ... passed to next method
-#' @param .dots passed to next method
+#' @param add passed to next method
 #' @return folded
 #' @export 
 #' @keywords internal                       
-group_by_.folded <- function(.data, ..., .dots){
+group_by.folded <- function(.data, ..., add = FALSE){
   x <- NextMethod()
   class(x) <- union('folded',class(x))
   x
@@ -404,12 +378,11 @@ left_join.folded <- function(.data, ..., .dots){
 #' Selects folded.
 #' @param .data passed to next method
 #' @param ... passed to next method
-#' @param .dots passed to next method
 #' @return folded
 #' @import dplyr
 #' @export                        
 #' @keywords internal                       
-select_.folded <- function(.data, ..., .dots){
+select.folded <- function(.data, ...){
   x <- NextMethod()
   class(x) <- union('folded',class(x))
   x
@@ -424,7 +397,7 @@ select_.folded <- function(.data, ..., .dots){
 #' @return folded
 #' @export
 #' @keywords internal                    
-arrange_.folded <- function(.data, ..., .dots){
+arrange.folded <- function(.data, ...){
   x <- NextMethod()
   class(x) <- union('folded',class(x))
   x
@@ -483,6 +456,7 @@ fold <- function(x, ... )UseMethod('fold')
 #' \code{\link{sort.folded}} 
 #' \code{\link{unfold.folded}}
 #' @export
+#' @importFrom lazyeval dots_capture
 #' @examples 
 #' library(magrittr)
 #' library(dplyr)
@@ -896,9 +870,13 @@ encodeable <- function(x,y, tol = 10,...){
 }
 
 encoding <- function(x,y, ...){
-  codes <- if(is.factor(x)) levels(x) else unique(as.character(x))
-  decodes <- y[match(codes,x)] # one y for each x (by definition), so first suffices
-  encoding <- encode(codes,decodes)
+  data <- data.frame(x = x, y = y)
+  if(is.factor(y)) data <- arrange(data, y)
+  if(is.factor(x)) data <- arrange(data, x)
+  data <- unique(data) # one y for each x (by definition), so first suffices
+  # codes <- if(is.factor(x)) levels(x) else unique(as.character(x))
+  # decodes <- y[match(codes,x)] 
+  encoding <- encode(data$x,data$y)
   encoding
 }
 

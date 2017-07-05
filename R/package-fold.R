@@ -77,7 +77,7 @@
 #' x %>% fold %>% unfold(PRED,TIME,WT)
 #' 
 #' data(eventsf)
-#' identical(x %>% fold, eventsf)
+#' stopifnot(identical(x %>% fold, eventsf))
 
 #' @docType package
 #' @name foldpkg

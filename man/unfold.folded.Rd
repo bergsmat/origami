@@ -52,5 +52,5 @@ y \%>\% unfold(DV,SEX)
 y \%>\% unfold(TAD,SEX)
 }
 \seealso{
-\code{\link{fold_.data.frame}} \code{\link{unfold}} \code{\link{unfold_}}
+\code{\link{fold_.data.frame}} \code{\link{unfold}}
 }
