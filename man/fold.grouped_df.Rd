@@ -4,19 +4,28 @@
 \alias{fold.grouped_df}
 \title{Fold grouped_df}
 \usage{
-\method{fold}{grouped_df}(x, ...)
+\method{fold}{grouped_df}(x, ..., meta = obj_attr(x), simplify = TRUE,
+  sort = TRUE, tol = 10)
 }
 \arguments{
-\item{x}{grouped_df}
+\item{x}{data.frame}
 
-\item{...}{passed arguments}
+\item{...}{unquoted column names whose interaction makes records unique. Included in result but not stacked. groups(x) by default.  Named arguments are passed along.}
+
+\item{meta}{a list of formulas in the form object ~ attribute. Pass something with length 0 to suppress guessing.}
+
+\item{simplify}{set to NA any groups values that do not help distinguish values, and remove resulting duplicate records}
+
+\item{sort}{whether to sort the result}
+
+\item{tol}{maximum number of categories for guessing whether to encode metadata; encoding will always be attempted if metadata (attr) or its referent (obj) is a factor}
 }
 \value{
-folded
+folded data.frame with columns VARIABLE, META, VALUE and any supplied grouping items.
 }
 \description{
-Folds grouped_df, unclassing and passing groups explcitly as groups(x), over-ridden by anonymous arguments.
+Folds a grouped_df. Reclassifies as data.frame and passes groups explicitly. Anonymous arguments over-ride stored groups.
 }
 \seealso{
-\code{\link{fold.data.frame}} \code{\link{fold}} \code{\link{fold_.data.frame}} \code{\link{fold_.grouped_df}}
+\code{\link{obj_attr.data.frame}}  \code{\link{fold.grouped_df}}
 }

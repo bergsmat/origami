@@ -14,8 +14,9 @@ License: GPL-3
 LazyData: TRUE
 Imports: 
  tidyr,
- dplyr,
+ dplyr (>= 0.7.0),
  lazyeval,
+ rlang,
  encode,
  csv
 Suggests:
