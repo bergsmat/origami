@@ -14,4 +14,7 @@ unfold(x, ...)
 \description{
 Unfolds an object.
 }
+\seealso{
+\code{\link{unfold.folded}}
+}
 \keyword{internal}

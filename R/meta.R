@@ -70,7 +70,7 @@ as.folded.folded <- function(x,...)x
 #' @param sort Should the result be sorted?
 #' @return folded data.frame
 #' @import dplyr
-#' @importFrom rlang UQ
+#' @importFrom rlang UQS
 #' @export
 #' @seealso \code{\link{fold.data.frame}} \code{\link{as.folded}}
 as.folded.data.frame <- function(x, sort = TRUE, ...){
@@ -83,7 +83,7 @@ as.folded.data.frame <- function(x, sort = TRUE, ...){
     message('removing duplicates')
     x <- y
   }
-  y <- distinct(x, UQ(setdiff(names(x),'VALUE')))
+  y <- distinct(x, UQS(setdiff(names(x),'VALUE')))
   if(nrow(y) < nrow(x)){
     warning('removing unique values where keys are duplicated')
     x <- y
@@ -102,13 +102,16 @@ as.folded.data.frame <- function(x, sort = TRUE, ...){
 #' @return folded
 #' @import dplyr
 #' @export
+#' @importFrom rlang syms
+#' @importFrom rlang UQS
 #' @seealso \code{\link{fold.data.frame}}
 #' @examples 
 #' library(magrittr)
 #' data(eventsf)
 #' eventsf %>% sort
 sort.folded <- function(x, decreasing = FALSE,...){
-  x <-  dplyr::arrange_(x, .dots = setdiff(names(x),'VALUE'))
+  vars <- setdiff(names(x),'VALUE')
+  x <-  dplyr::arrange(x, UQS(syms(vars)))
   if(decreasing) x <- x[rev(rownames(x)),]
   rownames(x) <- NULL
   x
@@ -189,7 +192,7 @@ distill.data.frame <- function(
         decoded = canonical,
         ...
       )
-      mo <- distill.folded(x,mission = m,parent = lineage,...)
+      mo <- distill.data.frame(x,mission = m,parent = lineage,...)
       res <- weld(res, mo)
     }
   }
@@ -204,7 +207,7 @@ distill.data.frame <- function(
 #' @param ... passed arguments
 #' @export
 #' @keywords internal
-# @seealso \code{\link{unfold.folded}} 
+#' @seealso \code{\link{unfold.folded}} 
 unfold <- function(x,...)UseMethod('unfold')
 
 #' Unfold a Folded Data.frame
@@ -270,7 +273,7 @@ unfold.folded <- function(x, ...){
         x = x,
         mission = v
       ),
-      other
+      other # distill only passes these to decode.data.frame which does not use them
       )
     )
   )
@@ -613,7 +616,7 @@ fold_data_frame <- function(
   )
   # data
   d <- x[,setdiff(names(x),table$COL),drop = FALSE]
-  d <- tidyr::gather(d,VARIABLE,VALUE,UQ(setdiff(names(d),groups)))
+  d <- tidyr::gather(d,VARIABLE,VALUE,UQS(setdiff(names(d),groups)))
   d <- mutate(d,META = NA_character_)
   d <- mutate(d,VALUE = as.character(VALUE))
   #d <- as.folded(d, sort = sort, ...) # takes too long
@@ -796,12 +799,12 @@ getMeta <- function(x, table, groups, simplify, tol, ...){
   m <- x
   fac <- sapply(x,is.factor)
   m[fac] <- lapply(m[fac],as.character)
-  m <-  dplyr::select(m, UQ(c(groups,table$COL))) 
-  m <-  tidyr::gather(m, COL, VALUE, UQ(table$COL)) 
+  m <-  dplyr::select(m, UQS(c(groups,table$COL))) 
+  m <-  tidyr::gather(m, COL, VALUE, UQS(table$COL)) 
   m <-  unique(m)
   m <- left_join(m,table,by = 'COL') 
   #m <- dplyr::select(m, -COL)
-  m <- dplyr::select(m, VARIABLE, META, VALUE, COL, UQ(groups))
+  m <- dplyr::select(m, VARIABLE, META, VALUE, COL, UQS(groups))
   # m <- as.folded(m, sort = sort, ...)
   table$encoding <- sapply(seq_len(nrow(table)), supplyEncoding,source = x,table = table, tol = tol, ...)
   m <- left_join(m, select(table, VARIABLE, META, encoding),by = c('VARIABLE','META'))
