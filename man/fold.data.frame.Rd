@@ -66,6 +66,18 @@ y \%>\% data.frame
 # reducing the tolerance forces BLQ to match by groups (ID, TIME) instead of DV value
 z <- x  \%>\% fold(meta=list(DV~BLQ,BLQ~LLOQ),tol=3)
 z
+
+# another example
+x <- Theoph
+x \%<>\% mutate(
+  conc_LABEL = 'theophylline concentration',
+  conc_GUIDE = 'mg/L',
+  Time_LABEL = 'time since drug administration',
+  Time_GUIDE = 'hr',
+  Time_HALF = Time / 2 # to demonstrate variant attribute of key column
+)
+x \%<>\% fold(Subject, Time)
+x \%>\% unfold \%>\% head
 \dontshow{
 x <- events
 x \%<>\% filter(CMT == 2) \%>\% select(-EVID,-CMT,-AMT)

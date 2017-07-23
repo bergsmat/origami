@@ -260,8 +260,8 @@ unfold.folded <- function(x, ...){
   groups <- setdiff(names(x),c('VARIABLE','META','VALUE'))
   vars <- unique(x$VARIABLE[is.na(x$META)])
   if(length(var) == 0) var <- vars
-  var <- setdiff(var,groups) # groups return zero-row data.frames which do not merge well
-  if(length(var) == 0) stop('no non-group variables selected')
+#  var <- setdiff(var,groups) # groups may return zero-row data.frames which do not merge well
+#  if(length(var) == 0) stop('no non-group variables selected')
   # much faster with grouped_df removed
   x <- data.frame(x, stringsAsFactors = FALSE)
   y <- lapply(
@@ -277,12 +277,41 @@ unfold.folded <- function(x, ...){
       )
     )
   )
+  y <- y[sapply(y, function(i) nrow(i) > 0)]
   z <- metaMerge(y)
   groups <- intersect(groups,names(z))
   attr(z,'groups') <- groups
+  for(i in groups){
+    xtra <- distill(x, mission = i)
+    if(nrow(xtra)){
+      xtra <- shuffle(xtra, intersect(groups, names(xtra))) # any groups move forward
+      z <- merge(z, xtra, all.x = TRUE)
+      z <- shuffle(z, names(xtra), after = i)
+    }
+  }
+  if(length(z) == 0) z <- data.frame()
   z
 }
 
+shuffle <- function (x, who, after = NA){
+  names(x) <- make.unique(names(x))
+  who <- names(x[, who, drop = FALSE])
+  nms <- names(x)[!names(x) %in% who]
+  if (is.null(after)) 
+    after <- length(nms)
+  if (is.na(after)) 
+    after <- 0
+  if (length(after) == 0) 
+    after <- length(nms)
+  if (is.character(after)) 
+    after <- match(after, nms, nomatch = 0)
+  if (after < 0) 
+    after <- length(nms)
+  if (after > length(nms)) 
+    after <- length(nms)
+  nms <- append(nms, who, after = after)
+  x[nms]
+}
 #' @export
 dplyr::filter
 
@@ -542,6 +571,19 @@ fold.grouped_df <- function(
 #' # reducing the tolerance forces BLQ to match by groups (ID, TIME) instead of DV value
 #' z <- x  %>% fold(meta=list(DV~BLQ,BLQ~LLOQ),tol=3)
 #' z
+#' 
+#' # another example
+#' x <- Theoph
+#' x %<>% mutate(
+#'   conc_LABEL = 'theophylline concentration',
+#'   conc_GUIDE = 'mg/L',
+#'   Time_LABEL = 'time since drug administration',
+#'   Time_GUIDE = 'hr',
+#'   Time_HALF = Time / 2 # to demonstrate variant attribute of key column
+#' )
+#' x %<>% fold(Subject, Time)
+#' x %>% unfold %>% head
+
 #' \dontshow{
 #' x <- events
 #' x %<>% filter(CMT == 2) %>% select(-EVID,-CMT,-AMT)
@@ -813,7 +855,17 @@ getMeta <- function(x, table, groups, simplify, tol, ...){
   m$COL <- NULL
   m <- unique(m) # remove copies of encodings, if any
   if(simplify) m <- simplify.folded(m,...)
-  m 
+  # supplyEncoding does not work for keys
+  for(i in groups){
+    if(i %in% names(m) & is.factor(x[[i]])) {
+      m[[i]] <- factor(
+        m[[i]], 
+        levels = levels(x[[i]]), 
+        ordered = is.ordered(x[[i]])
+      )
+    }
+  }
+  m
 }
 
 mapped <- function(x,y){ # TRUE if there is only one y for each x
