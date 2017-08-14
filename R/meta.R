@@ -280,7 +280,7 @@ unfold.folded <- function(x, ...){
   y <- y[sapply(y, function(i) nrow(i) > 0)]
   z <- metaMerge(y)
   groups <- intersect(groups,names(z))
-  attr(z,'groups') <- groups
+  # attr(z,'groups') <- groups
   for(i in groups){
     xtra <- distill(x, mission = i)
     if(nrow(xtra)){
@@ -289,6 +289,7 @@ unfold.folded <- function(x, ...){
       z <- shuffle(z, names(xtra), after = i)
     }
   }
+  attr(z,'groups') <- groups
   if(length(z) == 0) z <- data.frame()
   z
 }
@@ -969,9 +970,12 @@ decode.data.frame <- function(
 #' @param x spec
 #' @param ... passed arguments
 #' @return folded
+#' @import spec
 #' @export
 as.folded.spec <- function(x,...){
-  y <- select(x, VARIABLE = column, LABEL = label, GUIDE = guide)
+  y <- x
+  y <- mutate(y, guide = ifelse(encoded(x), guide, guidetext(x)))
+  y <- select(y, VARIABLE = column, LABEL = label, GUIDE = guide)
   y <- tidyr::gather(y, META, VALUE, LABEL, GUIDE)
   class(y) <- 'data.frame'
   y <- as.folded(y)
