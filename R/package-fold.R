@@ -51,8 +51,8 @@
 #' )
 #' 
 #' x %<>% mutate(
-#'   C_GUIDE       = factor(C, exclude = NULL,
-#'    levels       = c(NA,'C'),
+#'   C_GUIDE       = factor(paste(C), exclude = NULL,
+#'    levels       = c('NA','C'),
 #'    labels       = c('not commented','commented')),
 #'   TIME_GUIDE    = 'h',
 #'   DV_GUIDE      = 'ng/mL',
@@ -76,7 +76,7 @@
 #' x %>% fold %>% unfold(PRED,TIME,WT)
 #' 
 #' data(eventsf)
-#' stopifnot(identical(x %>% fold, eventsf))
+#' stopifnot(identical(x %>% fold, eventsf) )
 
 #' @docType package
 #' @name foldpkg

@@ -64,7 +64,7 @@ y <- x  \%>\% fold(meta=list(DV~BLQ,BLQ~LLOQ))
 y \%>\% data.frame
 
 # reducing the tolerance forces BLQ to match by groups (ID, TIME) instead of DV value
-z <- x  \%>\% fold(meta=list(DV~BLQ,BLQ~LLOQ),tol=3)
+z <- x \%>\% fold(meta=list(DV~BLQ,BLQ~LLOQ),tol=3)
 z
 
 # another example

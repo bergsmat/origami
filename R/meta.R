@@ -447,7 +447,7 @@ fold.grouped_df <- function(
 #' y %>% data.frame
 #' 
 #' # reducing the tolerance forces BLQ to match by groups (ID, TIME) instead of DV value
-#' z <- x  %>% fold(meta=list(DV~BLQ,BLQ~LLOQ),tol=3)
+#' z <- x %>% fold(meta=list(DV~BLQ,BLQ~LLOQ),tol=3)
 #' z
 #' 
 #' # another example
@@ -771,7 +771,7 @@ encoding <- function(x,y, ...){
   data <- unique(data) # one y for each x (by definition), so first suffices
   # codes <- if(is.factor(x)) levels(x) else unique(as.character(x))
   # decodes <- y[match(codes,x)] 
-  encoding <- encode(data$x,data$y)
+  encoding <- encode(paste(data$x),data$y) # must trap NA codes
   encoding
 }
 
