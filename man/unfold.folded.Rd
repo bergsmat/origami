@@ -4,15 +4,17 @@
 \alias{unfold.folded}
 \title{Unfold a Folded Data.frame}
 \usage{
-\method{unfold}{folded}(x, ...)
+\method{unfold}{folded}(x, ..., sort = TRUE)
 }
 \arguments{
 \item{x}{folded data.frame}
 
 \item{...}{variables to unfold, given as unquoted anonymous names}
+
+\item{sort}{whether to sort the result by groups values}
 }
 \value{
-data.frame with a groups attribute (character)
+class 'unfolded': data.frame with a groups attribute (character)
 }
 \description{
 Unfolds a folded data.frame, or part thereof.

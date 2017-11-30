@@ -1,3 +1,4 @@
+
 #' Save Folded Format as CSV
 #' 
 #' Saves folded format as CSV.  Simply calls as.csv.data.frame.
@@ -177,7 +178,8 @@ distill.data.frame <- function(
       me <- dplyr::select(me, -VARIABLE)
       me <-  .informative(me)
       lineage <- c(parent,mission)
-      canonical <- c(lineage,m)
+      # canonical <- c(lineage,m)
+      canonical <- c(mission, m) # e.g. BLQ_LLOQ not DV_BLQ_LLOQ
       canonical <- paste(canonical,collapse = '_')
       names(me)[names(me) == m] <- canonical
       # mo <- distill.folded(x,mission = m,parent = lineage,...)
@@ -218,7 +220,8 @@ unfold <- function(x,...)UseMethod('unfold')
 #' 
 #' @param x folded data.frame
 #' @param ... variables to unfold, given as unquoted anonymous names
-#' @return data.frame with a groups attribute (character)
+#' @param sort whether to sort the result by groups values
+#' @return class 'unfolded': data.frame with a groups attribute (character)
 #' @export
 #' @seealso \code{\link{unfold}} 
 #' @examples 
@@ -251,7 +254,7 @@ unfold <- function(x,...)UseMethod('unfold')
 #' y %>% unfold(TAD)
 #' y %>% unfold(DV,SEX)
 #' y %>% unfold(TAD,SEX)
-unfold.folded <- function(x, ...){
+unfold.folded <- function(x, ..., sort = TRUE){
   args <- quos(...)
   args <- lapply(args, f_rhs)
   var <- args[names(args) == '']
@@ -263,7 +266,7 @@ unfold.folded <- function(x, ...){
 #  var <- setdiff(var,groups) # groups may return zero-row data.frames which do not merge well
 #  if(length(var) == 0) stop('no non-group variables selected')
   # much faster with grouped_df removed
-  x <- data.frame(x, stringsAsFactors = FALSE)
+  x <- data.frame(x, stringsAsFactors = FALSE,check.names = FALSE, fix.empty.names = FALSE)
   y <- lapply(
     var,
     function(v)do.call(
@@ -280,17 +283,25 @@ unfold.folded <- function(x, ...){
   y <- y[sapply(y, function(i) nrow(i) > 0)]
   z <- metaMerge(y)
   groups <- intersect(groups,names(z))
+  #groups <- union(groups, var)
   # attr(z,'groups') <- groups
   for(i in groups){
     xtra <- distill(x, mission = i)
     if(nrow(xtra)){
       xtra <- shuffle(xtra, intersect(groups, names(xtra))) # any groups move forward
-      z <- merge(z, xtra, all.x = TRUE)
+      z <- merge(z, xtra, all.x = TRUE, sort = FALSE)
       z <- shuffle(z, names(xtra), after = i)
     }
   }
-  attr(z,'groups') <- groups
   if(length(z) == 0) z <- data.frame()
+  groups <- intersect(groups,names(z))
+  attr(z,'groups') <- groups
+  if(sort & length(groups)) {
+    lst <- c(z[groups], list(method = 'radix', na.last = FALSE))
+    dex <- do.call(order, lst)
+    z <- z[dex,,drop = FALSE]
+  }
+  class(z) <- c('unfolded','data.frame')
   z
 }
 
@@ -315,140 +326,6 @@ shuffle <- function (x, who, after = NA){
 }
 #' @export
 dplyr::filter
-
-#' Filter Folded
-#' 
-#' Filters folded.
-#' @param .data passed to next method
-#' @param ... passed to next method
-#' @return folded
-#' @keywords internal                       
-#' @export      
-filter.folded <- function(.data, ...){
-  x <- NextMethod()
-  class(x) <- union('folded',class(x))
-  x
-}
-
-#' Group Folded
-#' 
-#' Groups folded.
-#' @param .data passed to next method
-#' @param ... passed to next method
-#' @param add passed to next method
-#' @return folded
-#' @export 
-#' @keywords internal                       
-group_by.folded <- function(.data, ..., add = FALSE){
-  x <- NextMethod()
-  class(x) <- union('folded',class(x))
-  x
-}
-
-#' Anti-join Folded
-#' 
-#' Anti-joins folded.
-#' @param .data passed to next method
-#' @param ... passed to next method
-#' @param .dots passed to next method
-#' @return folded
-#' @export 
-#' @keywords internal                       
-anti_join.folded <- function(.data, ..., .dots){
-  x <- NextMethod()
-  class(x) <- union('folded',class(x))
-  x
-}
-
-#' Ungroup Folded
-#' 
-#' Ungroups folded.
-#' @param .data passed to next method
-#' @param ... passed to next method
-#' @param .dots passed to next method
-#' @return folded
-#' @export                        
-#' @keywords internal                       
-ungroup.folded <- function(.data, ..., .dots){
-  x <- NextMethod()
-  class(x) <- union('folded',class(x))
-  x
-}
-
-#' Mutate Folded
-#' 
-#' Mutates folded.
-#' @param .data passed to next method
-#' @param ... passed to next method
-#' @param .dots passed to next method
-#' @return folded
-#' @export                        
-#' @keywords internal                       
-mutate.folded <- function(.data, ...){
-  x <- NextMethod()
-  class(x) <- union('folded',class(x))
-  x
-}
-
-#' Transmutate Folded
-#' 
-#' Transmutates folded.
-#' @param .data passed to next method
-#' @param ... passed to next method
-#' @param .dots passed to next method
-#' @return folded
-#' @export                        
-#' @keywords internal                       
-transmutate.folded <- function(.data, ...){
-  x <- NextMethod()
-  class(x) <- union('folded',class(x))
-  x
-}
-
-#' Left-join Folded
-#' 
-#' Left-joins folded.
-#' @param .data passed to next method
-#' @param ... passed to next method
-#' @param .dots passed to next method
-#' @return folded
-#' @export                        
-#' @keywords internal                       
-left_join.folded <- function(.data, ..., .dots){
-  x <- NextMethod()
-  class(x) <- union('folded',class(x))
-  x
-}
-
-#' Select Folded
-#' 
-#' Selects folded.
-#' @param .data passed to next method
-#' @param ... passed to next method
-#' @return folded
-#' @import dplyr
-#' @export                        
-#' @keywords internal                       
-select.folded <- function(.data, ...){
-  x <- NextMethod()
-  class(x) <- union('folded',class(x))
-  x
-}
-
-#' Arrange Folded
-#' 
-#' Arranges folded.
-#' @param .data passed to next method
-#' @param ... passed to next method
-#' @param .dots passed to next method
-#' @return folded
-#' @export
-#' @keywords internal                    
-arrange.folded <- function(.data, ...){
-  x <- NextMethod()
-  class(x) <- union('folded',class(x))
-  x
-}
 
 #' Fold an Object
 #' 
@@ -822,9 +699,13 @@ metaMerge.character <- function(x,import = read.table,all = TRUE,...){
 
 metaMerge.default <- function(x,y,all = TRUE,...)merge(x,y,all = all,...)
 
-metaMerge.data.frame <- function(x,y,all = TRUE,...){
+metaMerge.data.frame <- function(x,y,all = TRUE, sort = FALSE, ...){
   if(is.null(y))warning('merging data.frame with NULL object')
-  merge(x,y,all = all,...)
+  # Here we deliberately disable all sorting.
+  # Sort is trapped in the formals but over-ridden as FALSE.
+  # Sort scheme is relegated to unfold.folded.
+  # Per help, merge.data.frame sorts lexically only: inadequate for our purposes.
+  merge(x,y,all = all, sort = FALSE, ...)
 }
 
 metaMerge.NULL <- function(x,y,all = TRUE,...){
@@ -932,7 +813,7 @@ weld <- function(x,y,...){
   if(!nrow(x) & !nrow(y))return(x)
   if(!nrow(x) &  nrow(y))return(y)
   if( nrow(x) & !nrow(y))return(x)
-  if( nrow(x) &  nrow(y))merge(x,y,all = T)
+  if( nrow(x) &  nrow(y))merge(x,y,all = T, sort = FALSE)
 }
 
 decode.data.frame <- function(

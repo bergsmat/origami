@@ -1,7 +1,7 @@
 Package: fold
 Type: Package
 Title: A Self-Describing Dataset Format and Interface
-Version: 0.2.3
+Version: 0.2.4
 Author: Tim Bergsma
 Maintainer: Tim Bergsma <bergsmat@gmail.com>
 Description: Defines a compact data format that includes metadata. 
