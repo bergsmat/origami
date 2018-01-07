@@ -15,7 +15,7 @@
 Creates a plot from folded.  Packs metadata into attributes and calls next method.
 }
 \seealso{
-Other univariate plots: \code{\link{dens.folded}}
+Other univariate plots: \code{\link{densplot.folded}}
 
 Other bivariate plots: \code{\link{boxplot.folded}},
   \code{\link{scatter.folded}}
