@@ -84,7 +84,8 @@ as.folded.data.frame <- function(x, sort = TRUE, ...){
     message('removing duplicates')
     x <- y
   }
-  y <- distinct(x, UQS(setdiff(names(x),'VALUE')))
+  nms <- setdiff(names(x), 'VALUE')
+  y <- distinct(x, UQS(syms(nms)), .keep_all = TRUE)
   if(nrow(y) < nrow(x)){
     warning('removing unique values where keys are duplicated')
     x <- y
@@ -536,7 +537,7 @@ fold_data_frame <- function(
   )
   # data
   d <- x[,setdiff(names(x),table$COL),drop = FALSE]
-  d <- tidyr::gather(d,VARIABLE,VALUE,UQS(setdiff(names(d),groups)))
+  d <- tidyr::gather(d,VARIABLE,VALUE,UQS(syms(setdiff(names(d),groups))))
   d <- mutate(d,META = NA_character_)
   d <- mutate(d,VALUE = as.character(VALUE))
   #d <- as.folded(d, sort = sort, ...) # takes too long
@@ -723,12 +724,12 @@ getMeta <- function(x, table, groups, simplify, tol, ...){
   m <- x
   fac <- sapply(x,is.factor)
   m[fac] <- lapply(m[fac],as.character)
-  m <-  dplyr::select(m, UQS(c(groups,table$COL))) 
-  m <-  tidyr::gather(m, COL, VALUE, UQS(table$COL)) 
+  m <-  dplyr::select(m, UQS(syms(c(groups,table$COL))))
+  m <-  tidyr::gather(m, COL, VALUE, UQS(syms(table$COL)))
   m <-  unique(m)
   m <- left_join(m,table,by = 'COL') 
   #m <- dplyr::select(m, -COL)
-  m <- dplyr::select(m, VARIABLE, META, VALUE, COL, UQS(groups))
+  m <- dplyr::select(m, VARIABLE, META, VALUE, COL, UQS(syms(groups)))
   # m <- as.folded(m, sort = sort, ...)
   table$encoding <- sapply(seq_len(nrow(table)), supplyEncoding,source = x,table = table, tol = tol, ...)
   m <- left_join(m, select(table, VARIABLE, META, encoding),by = c('VARIABLE','META'))
